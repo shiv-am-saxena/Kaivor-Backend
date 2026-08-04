@@ -1,4 +1,4 @@
-import { IRequestHandler } from "../types/RequestHandler";
+import { IRequestHandler } from "../types/RequestHandler.js";
 import { Request, Response, NextFunction } from "express";
 
 export const asyncHandler = (fn: IRequestHandler) => {

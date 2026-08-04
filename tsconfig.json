@@ -1,11 +1,11 @@
 {
 	"compilerOptions": {
 		"target": "ESNext",
-		"lib": ["ESNext", "DOM"],
-		"module": "ESNext",
-		"moduleResolution": "bundler",
+		"lib": ["ESNext"],
+		"module": "NodeNext",
+		"moduleResolution": "NodeNext",
 		"rootDir": "./src",
-		"outDir": "./dist",
+		"outDir": "dist",
 		"esModuleInterop": true,
 		"allowSyntheticDefaultImports": true,
 		"resolveJsonModule": true,
