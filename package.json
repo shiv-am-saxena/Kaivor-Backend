@@ -1,0 +1,62 @@
+{
+	"name": "Kaivor-Backend",
+	"version": "1.0.0",
+	"description": "A REST API for Kaivor, a platform that allows users to buy products sold by Kaivor and admin can manage them.",
+	"main": "./dist/src/index.js",
+	"private": true,
+	"scripts": {
+		"dev": "tsx --watch ./src/index.ts",
+		"install": "pnpm install",
+		"lint": "pnpm dlx eslint . --ext .ts",
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"build": "tsc",
+		"start": "node ./dist/src/index.js"
+	},
+	"author": "Shivam Saxena",
+	"github": "https://github.com/shiv-am-saxena/Kaivor-Backend",
+	"license": "ISC",
+	"type": "module",
+	"engines": {
+		"node": "24.x"
+	},
+	"dependencies": {
+		"bcryptjs": "^3.0.3",
+		"chalk": "^6.0.0",
+		"cookie-parser": "^1.4.7",
+		"cors": "^2.8.6",
+		"dotenv": "^17.4.2",
+		"express": "^5.2.1",
+		"express-session": "^1.19.0",
+		"jsonwebtoken": "^9.0.3",
+		"mongoose": "^9.9.1",
+		"morgan": "^1.11.0",
+		"multer": "^2.2.0",
+		"passport": "^0.7.0",
+		"passport-github2": "^0.1.12",
+		"passport-google-oauth20": "^2.0.0",
+		"tsx": "^4.23.4",
+		"winston": "^3.19.0",
+		"zod": "^4.4.3"
+	},
+	"packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee",
+	"devDependencies": {
+		"@eslint/js": "^10.0.1",
+		"@types/cookie-parser": "^1.4.10",
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.6",
+		"@types/express-session": "^1.19.0",
+		"@types/jsonwebtoken": "^9.0.10",
+		"@types/morgan": "^1.9.10",
+		"@types/multer": "^2.2.0",
+		"@types/node": "^26.1.2",
+		"@types/passport": "^1.0.17",
+		"@types/passport-github2": "^1.2.9",
+		"@types/passport-google-oauth20": "^2.0.17",
+		"eslint": "^10.8.0",
+		"globals": "^17.9.0",
+		"jiti": "^2.7.0",
+		"prettier": "^3.9.6",
+		"typescript": "^7.0.2",
+		"typescript-eslint": "^8.65.0"
+	}
+}
