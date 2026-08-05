@@ -7,7 +7,7 @@
 	"scripts": {
 		"dev": " clear && clear && tsx --watch ./src/index.ts",
 		"lint": "pnpm dlx eslint . --ext .ts",
-		"test": "echo \"Error: no test specified\" && exit 1",
+		"test": "NODE_OPTIONS=--experimental-vm-modules jest",
 		"build": "tsc",
 		"start": "node ./dist/index.js",
 		"lint:fix": "pnpm dlx eslint . --ext .ts --fix"
@@ -42,10 +42,12 @@
 	"packageManager": "pnpm@11.20.0+sha512.9a6f330a95b66446ea088faf1521405a8a01f07fde7124cc9958dfed52d4bb436737e65b08f85f37b46fcba375092558ac51262b816844b22f63406ed166bfee",
 	"devDependencies": {
 		"@eslint/js": "^10.0.1",
+		"@jest/globals": "^30.4.1",
 		"@types/cookie-parser": "^1.4.10",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/express-session": "^1.19.0",
+		"@types/jest": "^29.5.14",
 		"@types/jsonwebtoken": "^9.0.10",
 		"@types/morgan": "^1.9.10",
 		"@types/multer": "^2.2.0",
@@ -54,10 +56,15 @@
 		"@types/passport-github2": "^1.2.9",
 		"@types/passport-google-oauth20": "^2.0.17",
 		"eslint": "^10.8.0",
+		"eslint-plugin-jest": "^29.16.0",
 		"globals": "^17.9.0",
+		"jest": "^29.7.0",
 		"jiti": "^2.7.0",
+		"mongodb-memory-server": "^11.2.0",
 		"prettier": "^3.9.6",
-		"typescript": "^7.0.2",
+		"supertest": "^7.2.2",
+		"ts-jest": "^29.4.12",
+		"typescript": "^5.2.2",
 		"typescript-eslint": "^8.65.0"
 	}
 }

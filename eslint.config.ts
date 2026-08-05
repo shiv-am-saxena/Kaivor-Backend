@@ -1,11 +1,13 @@
 import js from "@eslint/js";
 import tseslint from "typescript-eslint";
 import { defineConfig } from "eslint/config";
+import jest from "eslint-plugin-jest";
+import globals from "globals";
 
 export default defineConfig([
 	{
 		files: ["src/**/*.{js,mjs,cjs,ts,mts,cts}"],
-		plugins: { js, tseslint },
+		plugins: { js, tseslint, jest },
 		extends: ["js/recommended", "tseslint/recommended"],
 		languageOptions: {
 			ecmaVersion: "latest",
@@ -13,7 +15,10 @@ export default defineConfig([
 			parser: tseslint.parser,
 			parserOptions: {
 				project: "./tsconfig.json"
-			}
+			},
+			globals: {
+				...globals.jest
+			},
 		},
 		rules: {
 			"no-console": ["error", { allow: ["warn", "error"] }],
@@ -22,10 +27,7 @@ export default defineConfig([
 			eqeqeq: ["error", "always"],
 			curly: ["error", "all"],
 			"max-depth": ["error", { max: 4 }],
-			"max-lines": [
-				"warn",
-				{ max: 300, skipBlankLines: true, skipComments: true }
-			],
+			"max-lines": ["warn", { max: 300, skipBlankLines: true, skipComments: true }],
 			"no-unreachable": "error",
 			"no-duplicate-imports": "error",
 			"no-var": "error",
@@ -55,6 +57,6 @@ export default defineConfig([
 			"@typescript-eslint/await-thenable": "error",
 			"@typescript-eslint/require-await": "error"
 		},
-		ignores: ["node_modules/**", "test/**"]
+		ignores: ["node_modules/**"]
 	}
 ]);
