@@ -5,7 +5,7 @@ export default class ApiError extends Error {
     message: string;
     data: any;
     stack?: any
-    constructor(statusCode: number, message: string, errors: Array<any>, stack = '') {
+    constructor(statusCode: number, message: string, errors: Array<any> = [], stack = '') {
         super(message);
         this.statusCode = statusCode;
         this.errors = errors;
