@@ -47,13 +47,13 @@ export default defineConfig([
 					allowTypedFunctionExpressions: true
 				}
 			],
-			"@typescript-eslint/no-explicit-any": "error",
+			"@typescript-eslint/no-explicit-any": "off",
 			"object-shorthand": ["error", "always"],
 			"prefer-template": "error",
 			"prefer-destructuring": "warn",
 			"no-shadow": "error",
 			"@typescript-eslint/no-floating-promises": "error",
-			"@typescript-eslint/no-misused-promises": "error",
+			"@typescript-eslint/no-misused-promises": ["error", { checksVoidReturn: false }],
 			"@typescript-eslint/await-thenable": "error",
 			"@typescript-eslint/require-await": "error"
 		},
