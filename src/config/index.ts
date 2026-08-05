@@ -8,6 +8,9 @@ const envSchema = z.object({
     PORT: z.string().regex(/^\d+$/).transform(Number), // Validate that PORT is a string of digits and transform it to a number
     CORS_ORIGIN: z.string().min(1, { message: "CORS_ORIGIN is required" }),// Validate that CORS_ORIGIN is not empty
     NODE_ENV: z.string().min(1, { message: "NODE_ENV is required" }), // Validate that NODE_ENV is not empty
+    REDIS_PASSWORD: z.string().min(1, { message: "REDIS_PASSWORD is required" }), // Validate that REDIS_PASSWORD is not empty
+    REDIS_HOST: z.string().min(1, { message: "REDIS_HOST is required" }), // Validate that REDIS_HOST is not empty
+    REDIS_PORT: z.string().regex(/^\d+$/).transform(Number), // Validate that REDIS_PORT is a string of digits and transform it to a number
 });
 
 export const env = {
@@ -15,4 +18,7 @@ export const env = {
     PORT: envSchema.parse(process.env).PORT,
     CORS_ORIGIN: envSchema.parse(process.env).CORS_ORIGIN,
     NODE_ENV: envSchema.parse(process.env).NODE_ENV,
+    REDIS_PASSWORD: envSchema.parse(process.env).REDIS_PASSWORD,
+    REDIS_HOST: envSchema.parse(process.env).REDIS_HOST,
+    REDIS_PORT: envSchema.parse(process.env).REDIS_PORT,
 }

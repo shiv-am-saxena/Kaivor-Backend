@@ -3,10 +3,11 @@ import connectDB from "./db/index.js";
 import { env } from "./config/index.js";
 import http from "http";
 import logger from "./libs/logger.js";
+import redisClient from "./services/redisInit.js";
 
 const server = http.createServer(app);
 
-connectDB()
+Promise.all([connectDB(), redisClient.ping()])
 	.then(() => {
 		server.listen(env.PORT, () => {
 			logger.info(`Server is running on port ${env.PORT}`);
