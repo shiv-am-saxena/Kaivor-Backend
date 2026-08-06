@@ -20,6 +20,8 @@ const envSchema = z.object({
     JWT_REFRESH_EXPIRES_IN: z.custom<StringValue>(), // Validate that JWT_REFRESH_EXPIRES_IN is not empty
     JWT_RESET_PASSWORD_SECRET: z.string().min(1, { message: "JWT_RESET_PASSWORD_SECRET is required" }), // Validate that JWT_RESET_PASSWORD_SECRET is not empty
     JWT_RESET_PASSWORD_EXPIRES_IN: z.custom<StringValue>(), // Validate that JWT_RESET_PASSWORD_EXPIRES_IN is not empty
+    EMAIL_USER: z.string().min(1, { message: "EMAIL_USER is required" }), // Validate that EMAIL_USER is not empty
+    EMAIL_PASS: z.string().min(1, { message: "EMAIL_PASS is required" }), // Validate that EMAIL_PASS is not empty
 });
 
 export const env = {
@@ -38,4 +40,6 @@ export const env = {
     JWT_REFRESH_EXPIRES_IN: envSchema.parse(process.env).JWT_REFRESH_EXPIRES_IN,
     JWT_RESET_PASSWORD_SECRET: envSchema.parse(process.env).JWT_RESET_PASSWORD_SECRET,
     JWT_RESET_PASSWORD_EXPIRES_IN: envSchema.parse(process.env).JWT_RESET_PASSWORD_EXPIRES_IN,
+    EMAIL_USER: envSchema.parse(process.env).EMAIL_USER,
+    EMAIL_PASS: envSchema.parse(process.env).EMAIL_PASS,
 }

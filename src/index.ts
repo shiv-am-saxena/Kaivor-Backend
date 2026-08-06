@@ -4,10 +4,11 @@ import { env } from "./config/index.js";
 import http from "http";
 import logger from "./libs/logger.js";
 import redisClient from "./services/redisInit.js";
+import { transporter } from "./services/nodemailer.js";
 
 const server = http.createServer(app);
 
-Promise.all([connectDB(), redisClient.ping()])
+Promise.all([connectDB(), redisClient.ping(), transporter.verify()])
 	.then(() => {
 		server.listen(env.PORT, () => {
 			logger.info(`Server is running on port ${env.PORT}`);
