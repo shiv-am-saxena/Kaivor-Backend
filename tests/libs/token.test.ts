@@ -1,5 +1,5 @@
 import jwt, { JwtPayload } from "jsonwebtoken";
-import { env } from "../../src/config/index";
+import { env } from "../../src/config/index.js";
 import {
 	generateAccessToken,
 	generateRefreshToken,

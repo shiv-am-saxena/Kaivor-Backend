@@ -1,5 +1,5 @@
-import UserModel from "../../src/models/user.model";
-import { connect, disconnect, clearCollections } from "../db/test";
+import UserModel from "../../src/models/user.model.js";
+import { connect, disconnect, clearCollections } from "../db/test.js";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "@jest/globals";
 
 describe("UserModel Integration & Unique Constraints", () => {

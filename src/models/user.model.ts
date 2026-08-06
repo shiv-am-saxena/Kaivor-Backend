@@ -23,7 +23,6 @@ const userSchema = new Schema<IUser>(
 		},
 		password: {
 			type: String,
-			message: "Password is required"
 		},
 		phoneNumber: {
 			type: String,
@@ -41,7 +40,8 @@ const userSchema = new Schema<IUser>(
 		addressBook: [{ type: Schema.Types.ObjectId, ref: "AddressBook" }],
 		refreshToken: {
 			type: String,
-			select: false
+			select: false,
+			expires: 60 * 60 * 24 // 24 hours
 		}
 	},
 	{ timestamps: true, versionKey: false }

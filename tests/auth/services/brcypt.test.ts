@@ -1,5 +1,5 @@
 import { describe, it, expect } from "@jest/globals";
-import { hashPassword, comparePassword } from "../../../src/feature/auth/services/bcrypt";
+import { hashPassword, comparePassword } from "../../../src/feature/auth/services/bcrypt.js";
 
 describe("Bcrypt Service", () => {
     it("should hash a password and compare it successfully", async () => {

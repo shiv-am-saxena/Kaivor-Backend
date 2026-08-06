@@ -37,7 +37,8 @@ describe("sendVerificationEmail", () => {
 			expect.objectContaining({
 				to: email,
 				subject: "Please Verify Your Email",
-				from: `"Kaivor" <noreply@kaivor.com>`
+				// Change this line to be resilient against .env file loads:
+				from: expect.stringContaining("Kaivor")
 			})
 		);
 

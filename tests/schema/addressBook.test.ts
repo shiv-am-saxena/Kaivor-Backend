@@ -1,5 +1,5 @@
-import AddressBookModel from "../../src/models/addressBook.model";
-import { connect, disconnect, clearCollections } from "../db/test";
+import AddressBookModel from "../../src/models/addressBook.model.ts";
+import { connect, disconnect, clearCollections } from "../db/test.js";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "@jest/globals";
 
 describe("AddressBookModel Integration & Unique Constraints", () => {

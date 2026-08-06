@@ -2,18 +2,19 @@ import { transporter } from "../../../services/nodemailer.js";
 import logger from "../../../libs/logger.js";
 import ApiError from "../../../utils/ApiError.js";
 import Mail from "nodemailer/lib/mailer/index.js";
+import { env } from "../../../config/index.js";
 
 export const sendVerificationEmail = async (
 	userEmail: string,
 	verificationToken: string
 ): Promise<boolean> => {
 	try {
-		const baseUrl = process.env.BASE_URL as string;
+		const baseUrl = env.BASE_URL;
 		const verificationUrl = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
 
 		// Use Mail.Options to strictly type the email configuration
 		const mailOptions: Mail.Options = {
-			from: `"Kaivor" <${process.env.EMAIL_USER}>`,
+			from: `"Kaivor" <${env.EMAIL_USER}>`,
 			to: userEmail,
 			subject: "Please Verify Your Email",
 			html: `
