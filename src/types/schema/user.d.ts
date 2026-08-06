@@ -1,7 +1,7 @@
 export default interface IUser {
     _id: string; // Unique identifier for the user
-    avatar: string; // URL or path to the user's avatar image
     fullName: string; // User's full name
+    role: "user" | "admin"; // User's role, either "user" or "admin"
     email: string; // User's email address
     password: string;
     phoneNumber: string; // User's phone number
@@ -11,6 +11,7 @@ export default interface IUser {
         phone: boolean; // Indicates if the user's phone number is verified
     }
     addressBook: IUserAddressBook[]; // Array of user's address book entries
+    refreshToken: string; // Token used for refreshing the user's session
     createdAt: Date; // Timestamp indicating when the user was created
     updatedAt: Date; // Timestamp indicating when the user was last updated
 }

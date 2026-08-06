@@ -13,7 +13,7 @@ describe("UserModel Integration & Unique Constraints", () => {
 
 	it("should successfully save a user with valid, unique data", async () => {
 		const user = new UserModel({
-			name: "First User",
+			fullName: "First User",
 			email: "first@example.com",
 			password: "password123",
 			phoneNumber: "+1111111111"
@@ -22,19 +22,20 @@ describe("UserModel Integration & Unique Constraints", () => {
 		const savedUser = await user.save();
 		expect(savedUser._id).toBeDefined();
 		expect(savedUser.email).toBe("first@example.com");
+		expect(savedUser.role).toBe("user");
 	});
 
 	it("should throw a duplicate key error (E11000) when saving a duplicate email", async () => {
 		// Save the first user
 		await new UserModel({
-			name: "Original User",
+			fullName: "Original User",
 			email: "duplicate@example.com",
 			password: "password123"
 		}).save();
 
 		// Attempt to save a second user with the same email
 		const duplicateUser = new UserModel({
-			name: "Copycat User",
+			fullName: "Copycat User",
 			email: "duplicate@example.com",
 			password: "differentpassword"
 		});
@@ -48,14 +49,14 @@ describe("UserModel Integration & Unique Constraints", () => {
 
 	it("should throw a duplicate key error (E11000) when saving a duplicate phone number", async () => {
 		await new UserModel({
-			name: "Phone User 1",
+			fullName: "Phone User 1",
 			email: "user1@example.com",
 			password: "password123",
 			phoneNumber: "+9999999999"
 		}).save();
 
 		const duplicatePhoneUser = new UserModel({
-			name: "Phone User 2",
+			fullName: "Phone User 2",
 			email: "user2@example.com",
 			password: "password456",
 			phoneNumber: "+9999999999" // Same phone, different email
@@ -67,39 +68,30 @@ describe("UserModel Integration & Unique Constraints", () => {
 		});
 	});
 
-	it("should allow emails with different casing (unless collation is set)", async () => {
-		// Note: By default, MongoDB indexes are case-sensitive.
-		// This test ensures we understand current schema behavior.
-		await new UserModel({
-			name: "Lower Case",
-			email: "test@example.com",
-			password: "password123"
-		}).save();
+	it("should convert emails to lowercase", async () => {
 
 		const upperCaseUser = new UserModel({
-			name: "Upper Case",
+			fullName: "Upper Case",
 			email: "TEST1@example.com",
 			password: "password123"
 		});
 
-		// This will pass by default. If you want emails to be case-insensitive,
-		// you must convert them to lowercase before saving in your application logic,
-		// or add a collation to your Mongoose schema index.
 		const saved = await upperCaseUser.save();
 		expect(saved._id).toBeDefined();
+		expect(saved.email).toBe("test1@example.com"); // Check if email is converted to lowercase
 	});
 
 	it("should expose the Mongoose 'optional unique' gotcha with null values", async () => {
 		// User 1 has no phone number
 		await new UserModel({
-			name: "No Phone 1",
+			fullName: "No Phone 1",
 			email: "nophone1@example.com",
 			password: "password123"
 		}).save();
 
 		// User 2 ALSO has no phone number
 		const user2 = new UserModel({
-			name: "No Phone 2",
+			fullName: "No Phone 2",
 			email: "nophone2@example.com",
 			password: "password456"
 		});
