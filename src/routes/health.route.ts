@@ -14,7 +14,7 @@ router.get("/health", (req: Request, res: Response) => {
 		second: "2-digit",
 		hour12: false
 	});
-	const timestamp = formatter.format(now).replace(" ", "T") + "+05:30";
+	const timestamp = `${formatter.format(now).replace(" ", "T")  }+05:30`;
 
 	res.status(200).json(new ApiResponse(200, timestamp, "Health check passed"));
 });

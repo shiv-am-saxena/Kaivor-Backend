@@ -10,7 +10,7 @@ export const sendVerificationEmail = async (
 ): Promise<boolean> => {
 	try {
 		const baseUrl = env.BASE_URL;
-		const verificationUrl = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
+		const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
 
 		// Use Mail.Options to strictly type the email configuration
 		const mailOptions: Mail.Options = {

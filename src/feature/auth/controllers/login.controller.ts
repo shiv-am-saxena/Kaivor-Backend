@@ -14,7 +14,7 @@ import {
 import UserModel from "../../../models/user.model.js";
 import { sendResetPasswordEmail, sendVerificationEmail } from "../services/email.js";
 import redisClient from "../../../services/redisInit.js";
-import { comparePassword } from "../services/bcrypt.js";
+import { comparePassword, hashPassword } from "../services/bcrypt.js";
 
 // Controller for handling user login using google authentication
 export const loginWithGoogle = asyncHandler(async (req: Request, res: Response) => {
@@ -181,11 +181,20 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
 	if (newPassword !== cnfNewPassword) {
 		throw new ApiError(400, "Passwords do not match");
 	}
+	const tokenExistInRedis = await redisClient.exists(`resetPasswordToken:${token}`);// Check if the reset token exists in Redis
+	if (tokenExistInRedis) {
+		throw new ApiError(401, "Reset token has already been used or is invalid");
+	}
 	const decodedToken = verifyResetPasswordToken(token);
 	if (!decodedToken) {
 		throw new ApiError(401, "Invalid or expired reset token");
 	}
-	const user = await UserModel.findByIdAndUpdate(decodedToken.id, { password: newPassword }, { new: true });
+	const ack = await redisClient.setex(`resetPasswordToken:${token}`, 3600, "used"); // Invalidate the reset token in Redis
+	if(!ack) {
+		throw new ApiError(500, "Failed to invalidate reset token");
+	}
+	const hashedPassword = await hashPassword(newPassword);// Hash the new password before saving it to the database
+	const user = await UserModel.findByIdAndUpdate(decodedToken.id, { password: hashedPassword }, { new: true });
 	if (!user) {
 		throw new ApiError(404, "User not found");
 	}
