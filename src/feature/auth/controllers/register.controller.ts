@@ -13,6 +13,7 @@ import UserModel from "../../../models/user.model.js";
 import { sendVerificationEmail } from "../services/email.js";
 import redisClient from "../../../services/redisInit.js";
 import { hashPassword } from "../services/bcrypt.js";
+import IUser from "../../../types/schema/user.js";
 
 // Controller for handling user registration and email verification
 export const registerWithGoogle = asyncHandler(async (req: Request, res: Response) => {
@@ -62,7 +63,12 @@ export const registerWithEmail = asyncHandler(async (req: Request, res: Response
 		throw new ApiError(409, "Phone number is already registered");
 	}
 	const hashedPassword = await hashPassword(password); // Hash the password before saving it to the database
-	const newUser = await UserModel.create({ fullName, email, password: hashedPassword, phoneNumber });
+	const newUser = await UserModel.create({
+		fullName,
+		email,
+		password: hashedPassword,
+		phoneNumber
+	});
 
 	const verificationToken = generateResetPasswordToken({ id: newUser._id, email: newUser.email }); // Generate a verification token for email verification
 	const mail = await sendVerificationEmail(newUser.email, verificationToken); // Send the verification email to the user
@@ -116,4 +122,17 @@ export const verifyEmail = asyncHandler(async (req: Request, res: Response) => {
 			"Email verified successfully. You can now log in to your account."
 		)
 	);
+});
+
+// Controller for deleting a user account
+export const deleteUserAccount = asyncHandler(async (req: Request, res: Response) => {
+	const { _id } = req.user as IUser; // Get the authenticated user from the request object (set by the isLoggedIn middleware)
+	if (!_id) {
+		throw new ApiError(401, "You are not logged in. Please log in to access this resource.");
+	}
+	const deletedUser = await UserModel.findByIdAndDelete({ _id }); // Delete the user account from the database
+	if (!deletedUser) {
+		throw new ApiError(404, "User not found");
+	}
+	res.status(200).json(new ApiResponse(200, null, "User account deleted successfully."));
 });

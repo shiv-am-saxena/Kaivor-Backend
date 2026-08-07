@@ -1,5 +1,7 @@
+import { ObjectId } from "mongoose";
+
 export default interface IUser {
-    _id: string; // Unique identifier for the user
+    _id: ObjectId; // Unique identifier for the user
     fullName: string; // User's full name
     role: "user" | "admin"; // User's role, either "user" or "admin"
     email: string; // User's email address
