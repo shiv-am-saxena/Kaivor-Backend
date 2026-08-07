@@ -58,7 +58,7 @@ passport.use("google-signup",
                 const newUser = await UserModel.create({
                     googleId: profile.id,
                     email: profile?.emails?.[0]?.value as string,
-                    name: profile?.displayName,
+                    fullName: profile?.displayName,
                     isVerified: {
                         email: true,
                     },

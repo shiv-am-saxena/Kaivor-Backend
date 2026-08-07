@@ -5,6 +5,7 @@ import http from "http";
 import logger from "./libs/logger.js";
 import redisClient from "./services/redisInit.js";
 import { transporter } from "./services/nodemailer.js";
+import errorHandler from "./middleware/errorHandler.js";
 
 const server = http.createServer(app);
 
@@ -19,3 +20,4 @@ Promise.all([connectDB(), redisClient.ping(), transporter.verify()])
 		logger.error(`Failed to connect to the database: ${message}`);
 		process.exit(1); // Exit the process with an error code
 	});
+app.use(errorHandler); // Global error handling middleware

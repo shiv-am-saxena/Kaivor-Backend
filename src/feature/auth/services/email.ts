@@ -42,3 +42,43 @@ export const sendVerificationEmail = async (
 		throw new ApiError(503,"Could not send verification email");
 	}
 };
+
+
+export const sendResetPasswordEmail = async (
+	userEmail: string,
+	resetToken: string
+): Promise<boolean> => {
+	try {
+		const baseUrl = env.BASE_URL;
+		const resetUrl = `${baseUrl}/api/auth/reset-password?token=${resetToken}`;
+
+		// Use Mail.Options to strictly type the email configuration
+		const mailOptions: Mail.Options = {
+			from: `"Kaivor" <${env.EMAIL_USER}>`,
+			to: userEmail,
+			subject: "Reset Your Password",
+			html: `
+            <div>
+                <h2>Welcome to Our App!</h2>
+                <p>Click the link below to reset your password:</p>
+                <br/>
+                <a  href="${resetUrl}"
+                    style="padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border-radius: 5px">
+                    Reset Password
+                </a>
+                <br/>
+                <p>If you did not request this, please ignore this email.</p>
+                <br />
+                <p>Or copy and paste this link into your browser:</p>
+                <p>${resetUrl}</p>
+            </div>`
+		};
+
+		const info = await transporter.sendMail(mailOptions);
+		logger.info(`Reset password email sent: ${info.messageId}`);
+		return true;
+	} catch (error) {
+		logger.error("Error sending reset password email:", error);
+		throw new ApiError(503, "Could not send reset password email");
+	}
+};
