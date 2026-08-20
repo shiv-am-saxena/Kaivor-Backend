@@ -25,7 +25,19 @@ passport.use("google-signin",
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
-                const user = await UserModel.findOne({ googleId: profile.id });
+                const googleId = profile.id;
+                const email = profile?.emails?.[0]?.value;
+
+                let user = await UserModel.findOne({ googleId });
+                if (!user && email) {
+                    user = await UserModel.findOne({ email });
+                    if (user) {
+                        user.googleId = googleId;
+                        user.isVerified = { ...user.isVerified, email: true };
+                        await user.save();
+                    }
+                }
+
                 if (!user) {
                     return done(null, false, { message: "User not found, Try registering first" });
                 }
@@ -46,18 +58,33 @@ passport.use("google-signup",
         },
         async (accessToken, refreshToken, profile, done) => {
             try {
-                const user = await UserModel.findOne({ googleId: profile?.emails?.[0]?.value });
+                const googleId = profile.id;
+                const email = profile?.emails?.[0]?.value;
+
+                // Check if user already exists by googleId
+                let user = await UserModel.findOne({ googleId });
                 if (user) {
-                    if(user.googleId === profile.id) {
+                    return done(null, false, { message: "User already exists, Try logging in" });
+                }
+
+                // Check if user exists by email
+                if (email) {
+                    user = await UserModel.findOne({ email });
+                    if (user) {
+                        if (!user.googleId) {
+                            user.googleId = googleId;
+                            user.isVerified = { ...user.isVerified, email: true };
+                            await user.save();
+                            return done(null, user);
+                        }
                         return done(null, false, { message: "User already exists, Try logging in" });
                     }
-                    user.googleId = profile.id;
-                    await user.save();
-                    return done(null, user);
                 }
+
+                // Create new user if not existing
                 const newUser = await UserModel.create({
-                    googleId: profile.id,
-                    email: profile?.emails?.[0]?.value as string,
+                    googleId,
+                    email: email as string,
                     fullName: profile?.displayName,
                     isVerified: {
                         email: true,

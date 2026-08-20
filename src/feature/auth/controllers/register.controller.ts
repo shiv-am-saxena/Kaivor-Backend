@@ -6,6 +6,7 @@ import ApiError from "../../../utils/ApiError.js";
 import ApiResponse from "../../../utils/ApiResponse.js";
 import {
 	generateAccessToken,
+	generateRefreshToken,
 	generateResetPasswordToken,
 	verifyResetPasswordToken
 } from "../../../libs/token.js";
@@ -25,9 +26,9 @@ export const googleCallback = asyncHandler(
 		await passport.authenticate(
 			"google-signup",
 			{ session: false },
-			(err: any, user: any, info: any) => {
+			async (err: any, user: any, info: any) => {
 				if (err) {
-					next(new ApiError(500, "Google authentication failed", err));
+					return next(new ApiError(500, "Google authentication failed", err));
 				}
 				if (!user) {
 					const errorMessage = encodeURIComponent(
@@ -35,8 +36,29 @@ export const googleCallback = asyncHandler(
 					);
 					return res.redirect(`${env.CORS_ORIGIN}/auth/register?error=${errorMessage}`); // User not found or authentication failed
 				}
-				const token = generateAccessToken({ _id: user._id, email: user.email }); // Generate JWT token for the authenticated user
-				const redirectUrl = `${env.CORS_ORIGIN}/auth/callback?token=${token}`; // Redirect to the frontend with the token as a query parameter
+				const accessToken = generateAccessToken({ _id: user._id, email: user.email });
+				const refreshToken = generateRefreshToken({ _id: user._id, email: user.email });
+
+				await UserModel.findByIdAndUpdate(
+					user._id,
+					{ refreshToken },
+					{ new: true }
+				);
+
+				res.cookie("refreshToken", refreshToken, {
+					httpOnly: true,
+					secure: env.NODE_ENV === "production",
+					sameSite: "strict",
+					maxAge: 24 * 60 * 60 * 1000 // 1 day
+				});
+				res.cookie("accessToken", accessToken, {
+					httpOnly: true,
+					secure: env.NODE_ENV === "production",
+					sameSite: "strict",
+					maxAge: 60 * 60 * 1000 // 60 minutes
+				});
+
+				const redirectUrl = `${env.CORS_ORIGIN}/auth/callback?token=${accessToken}`; // Redirect to the frontend with the token as a query parameter
 				return res.redirect(redirectUrl);
 			}
 		)(req, res, next);

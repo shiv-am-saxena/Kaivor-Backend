@@ -26,9 +26,9 @@ export const googleLoginCallback = asyncHandler(async (req: Request, res: Respon
 	await passport.authenticate(
 		"google-signin",
 		{ session: false },
-		(err: any, user: any, info: any) => {
+		async (err: any, user: any, info: any) => {
 			if (err) {
-				throw new ApiError(500, "Google authentication failed", err); // Authentication error
+				return next(new ApiError(500, "Google authentication failed", err)); // Authentication error
 			}
 			if (!user) {
 				const errorMessage = encodeURIComponent(
@@ -36,8 +36,29 @@ export const googleLoginCallback = asyncHandler(async (req: Request, res: Respon
 				);
 				return res.redirect(`${env.CORS_ORIGIN}/auth/login?error=${errorMessage}`); // User not found or authentication failed
 			}
-			const token = generateAccessToken({ _id: user._id, email: user.email }); // Generate JWT token for the authenticated user
-			const redirectUrl = `${env.CORS_ORIGIN}/auth/callback?token=${token}`; // Redirect to the frontend with the token as a query parameter
+			const accessToken = generateAccessToken({ _id: user._id, email: user.email });
+			const refreshToken = generateRefreshToken({ _id: user._id, email: user.email });
+
+			await UserModel.findByIdAndUpdate(
+				user._id,
+				{ refreshToken },
+				{ new: true }
+			);
+
+			res.cookie("refreshToken", refreshToken, {
+				httpOnly: true,
+				secure: env.NODE_ENV === "production",
+				sameSite: "strict",
+				maxAge: 24 * 60 * 60 * 1000 // 1 day
+			});
+			res.cookie("accessToken", accessToken, {
+				httpOnly: true,
+				secure: env.NODE_ENV === "production",
+				sameSite: "strict",
+				maxAge: 60 * 60 * 1000 // 60 minutes
+			});
+
+			const redirectUrl = `${env.CORS_ORIGIN}/auth/callback`; // Redirect to the frontend with the token as a query parameter
 			return res.redirect(redirectUrl);
 		}
 	)(req, res, next);
