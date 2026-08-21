@@ -10,7 +10,7 @@ export const sendVerificationEmail = async (
 ): Promise<boolean> => {
 	try {
 		const baseUrl = env.BASE_URL;
-		const verificationUrl = `${baseUrl}/api/auth/verify-email?token=${verificationToken}`;
+		const verificationUrl = `${baseUrl}/auth/verify-email?token=${verificationToken}`;
 
 		// Use Mail.Options to strictly type the email configuration
 		const mailOptions: Mail.Options = {
@@ -50,7 +50,7 @@ export const sendResetPasswordEmail = async (
 ): Promise<boolean> => {
 	try {
 		const baseUrl = env.BASE_URL;
-		const resetUrl = `${baseUrl}/api/auth/reset-password?token=${resetToken}`;
+		const resetUrl = `${baseUrl}/auth/reset-password?token=${resetToken}`;
 
 		// Use Mail.Options to strictly type the email configuration
 		const mailOptions: Mail.Options = {

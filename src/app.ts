@@ -20,7 +20,8 @@ app.use(requestLogger); // Log incoming requests
 app.use(express.json()); // Parse JSON request bodies
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded request bodies
 app.use(cookieParser()); // Parse cookie headers
-app.use(passport.initialize());// Initialize Passport for authentication
+app.use(passport.initialize()); // Initialize Passport for authentication
 app.use("/api", healthRoute); // Mount health check route
-app.use("/api/auth", authRoute);
+app.use("/api/auth", authRoute); // Mount authentication routes
+
 export default app;

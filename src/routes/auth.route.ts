@@ -10,6 +10,9 @@ router.post("/register", registerWithEmail);
 router.get("/register/google", registerWithGoogle);
 router.get("/register/google/callback", googleCallback);
 router.get("/verify-email", verifyEmail);
+router.get("/verify-email-page", (req, res) => {
+	res.render("verifyEmail");
+});
 router.post("/resend-verification-email", resendVerificationEmail);
 
 // Login routes
