@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { loginWithEmail, logout, googleLoginCallback, loginWithGoogle, regenAccessToken, resendVerificationEmail, forgotPassword, resetPassword } from "../feature/auth/controllers/login.controller.js";
+import { loginWithEmail, logout, googleLoginCallback, loginWithGoogle, regenAccessToken, resendVerificationEmail, forgotPassword, resetPassword, profile } from "../feature/auth/controllers/login.controller.js";
 import { registerWithEmail, googleCallback, registerWithGoogle, verifyEmail, deleteUserAccount } from "../feature/auth/controllers/register.controller.js";
 import { isLoggedIn } from "../middleware/isLoggedIn.js";
 
@@ -22,5 +22,7 @@ router.get("/delete", isLoggedIn, deleteUserAccount); // Route for deleting user
 // Forgot password routes
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
+// Fetch Profile
+router.get('/profile',isLoggedIn, profile);
 
 export default router;

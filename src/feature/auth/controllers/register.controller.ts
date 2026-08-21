@@ -42,7 +42,7 @@ export const googleCallback = asyncHandler(
 				await UserModel.findByIdAndUpdate(
 					user._id,
 					{ refreshToken },
-					{ new: true }
+					{ returnDocument: "after" }
 				);
 
 				res.cookie("refreshToken", refreshToken, {
