@@ -94,7 +94,7 @@ export const loginWithEmail = asyncHandler(async (req: Request, res: Response) =
 	}
 	const accessToken = generateAccessToken({ _id: user._id, email: user.email });
 	const refreshToken = generateRefreshToken({ _id: user._id, email: user.email });
-	const newUser = await UserModel.findByIdAndUpdate(user._id, { refreshToken }, { new: true });
+	const newUser = await UserModel.findByIdAndUpdate(user._id, { refreshToken }, { returnDocument: "after" });
 	if (!newUser) {
 		throw new ApiError(404, "User not found");
 	}
