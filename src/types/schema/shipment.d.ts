@@ -1,6 +1,8 @@
+import { ObjectId } from "mongoose";
+
 export default interface IShipment {
-    _id: string; // Unique identifier for the shipment
-    shippingAddress: string; // Shipping address for the shipment
+    _id: ObjectId; // Unique identifier for the shipment
+    shippingAddress: ObjectId; // Shipping address for the shipment
     shipmentStatus: string; // Status of the shipment (e.g., pending, shipped, delivered)
     trackingNumber?: string; // Tracking number for the shipment, if available
     carrier?: string; // Carrier responsible for the shipment, if available

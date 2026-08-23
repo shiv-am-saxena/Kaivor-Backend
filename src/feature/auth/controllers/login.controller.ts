@@ -12,7 +12,7 @@ import {
 	verifyResetPasswordToken
 } from "../../../libs/token.js";
 import UserModel from "../../../models/user.model.js";
-import { sendResetPasswordEmail, sendVerificationEmail } from "../services/email.js";
+import { sendResetPasswordEmail, sendVerificationEmail } from "../../../libs/email.js";
 import redisClient from "../../../services/redisInit.js";
 import { comparePassword, hashPassword } from "../services/bcrypt.js";
 import IUser from "../../../types/schema/user.js";
@@ -94,7 +94,11 @@ export const loginWithEmail = asyncHandler(async (req: Request, res: Response) =
 	}
 	const accessToken = generateAccessToken({ _id: user._id, email: user.email });
 	const refreshToken = generateRefreshToken({ _id: user._id, email: user.email });
-	const newUser = await UserModel.findByIdAndUpdate(user._id, { refreshToken }, { returnDocument: "after" });
+	const newUser = await UserModel.findByIdAndUpdate(
+		user._id,
+		{ refreshToken },
+		{ returnDocument: "after" }
+	);
 	if (!newUser) {
 		throw new ApiError(404, "User not found");
 	}
@@ -161,11 +165,11 @@ export const regenAccessToken = asyncHandler(async (req: Request, res: Response)
 	if (!decodedToken) {
 		throw new ApiError(401, "Invalid or expired refresh token");
 	}
-	const user = await UserModel.findById(decodedToken.id);
+	const user = await UserModel.findById(decodedToken._id).select("+refreshToken");
 	if (!user) {
 		throw new ApiError(404, "User not found");
 	}
-	if (user.refreshToken !== refreshToken) {
+	if (user.refreshToken !== refreshToken as string) {
 		throw new ApiError(401, "Refresh token does not match");
 	}
 	const newAccessToken = generateAccessToken({ _id: user._id, email: user.email });
@@ -250,11 +254,11 @@ export const resetPassword = asyncHandler(async (req: Request, res: Response) =>
 	}
 	res.status(200).json(new ApiResponse(200, null, "Password reset successful."));
 });
-//profile controller 
+//profile controller
 export const profile = asyncHandler(async (req: Request, res: Response) => {
 	const { _id } = req.user as IUser;
 	const user = await UserModel.findById(_id);
-	if(!user){
+	if (!user) {
 		throw new ApiError(500, "Failed to fetch user");
 	}
 	res.status(200).json(new ApiResponse(200, user, "Profile fetched successfully."));

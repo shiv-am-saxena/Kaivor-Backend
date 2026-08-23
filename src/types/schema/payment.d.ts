@@ -1,5 +1,7 @@
+import { ObjectId } from "mongoose";
+
 export default interface IPayment {
-    _id: string; // Unique identifier for the payment
+    _id: ObjectId; // Unique identifier for the payment
     totalAmount: number; // Total amount of the payment
     paymentMode: string; // Method of payment (e.g., credit card, PayPal)
     paymentStatus: string; // Status of the payment (e.g., pending, completed)

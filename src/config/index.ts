@@ -22,7 +22,11 @@ const envSchema = z.object({
     JWT_RESET_PASSWORD_EXPIRES_IN: z.custom<StringValue>(), // Validate that JWT_RESET_PASSWORD_EXPIRES_IN is not empty
     EMAIL_USER: z.string().min(1, { message: "EMAIL_USER is required" }), // Validate that EMAIL_USER is not empty
     EMAIL_PASS: z.string().min(1, { message: "EMAIL_PASS is required" }), // Validate that EMAIL_PASS is not empty
-    BASE_URL: z.string().min(1, { message: "BASE_URL is required" }) // Validate that BASE_URL is not empty
+    BASE_URL: z.string().min(1, { message: "BASE_URL is required" }), // Validate that BASE_URL is not empty
+    AWS_REGION: z.string().min(1, { message: "AWS_REGION is required" }), // Validate that AWS_REGION is not empty
+    AWS_ACCESS_KEY_ID: z.string().min(1, { message: "AWS_ACCESS_KEY_ID is required" }), // Validate that AWS_ACCESS_KEY_ID is not empty
+    AWS_SECRET_ACCESS_KEY: z.string().min(1, { message: "AWS_SECRET_ACCESS_KEY is required" }), // Validate that AWS_SECRET_ACCESS_KEY is not empty
+    AWS_S3_BUCKET_NAME: z.string().min(1, { message: "AWS_S3_BUCKET_NAME is required" }) // Validate that AWS_S3_BUCKET_NAME is not empty
 });
 
 export const env = {
@@ -43,5 +47,9 @@ export const env = {
     JWT_RESET_PASSWORD_EXPIRES_IN: envSchema.parse(process.env).JWT_RESET_PASSWORD_EXPIRES_IN,
     EMAIL_USER: envSchema.parse(process.env).EMAIL_USER,
     EMAIL_PASS: envSchema.parse(process.env).EMAIL_PASS,
-    BASE_URL: envSchema.parse(process.env).BASE_URL
+    BASE_URL: envSchema.parse(process.env).BASE_URL,
+    AWS_REGION: envSchema.parse(process.env).AWS_REGION,
+    AWS_ACCESS_KEY_ID: envSchema.parse(process.env).AWS_ACCESS_KEY_ID,
+    AWS_SECRET_ACCESS_KEY: envSchema.parse(process.env).AWS_SECRET_ACCESS_KEY,
+    AWS_S3_BUCKET_NAME: envSchema.parse(process.env).AWS_S3_BUCKET_NAME
 }

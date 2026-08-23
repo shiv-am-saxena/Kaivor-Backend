@@ -10,9 +10,6 @@ router.post("/register", registerWithEmail);
 router.get("/register/google", registerWithGoogle);
 router.get("/register/google/callback", googleCallback);
 router.get("/verify-email", verifyEmail);
-router.get("/verify-email-page", (req, res) => {
-	res.render("verifyEmail");
-});
 router.post("/resend-verification-email", resendVerificationEmail);
 
 // Login routes
@@ -21,11 +18,11 @@ router.get("/google", loginWithGoogle);
 router.get("/google/callback", googleLoginCallback);
 router.get("/logout", logout);
 router.post("/regen-access-token", regenAccessToken);
-router.get("/delete", isLoggedIn, deleteUserAccount); // Route for deleting user account, protected by isLoggedIn middleware
+router.delete("/delete", isLoggedIn, deleteUserAccount); // Route for deleting user account, protected by isLoggedIn middleware
 // Forgot password routes
 router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 // Fetch Profile
-router.get('/profile',isLoggedIn, profile);
+router.get("/profile", isLoggedIn, profile);
 
 export default router;

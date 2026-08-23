@@ -11,7 +11,7 @@ import {
 	verifyResetPasswordToken
 } from "../../../libs/token.js";
 import UserModel from "../../../models/user.model.js";
-import { sendVerificationEmail } from "../services/email.js";
+import { sendVerificationEmail } from "../../../libs/email.js";
 import redisClient from "../../../services/redisInit.js";
 import { hashPassword } from "../services/bcrypt.js";
 import IUser from "../../../types/schema/user.js";

@@ -6,10 +6,11 @@ import logger from "./libs/logger.js";
 import redisClient from "./services/redisInit.js";
 import { transporter } from "./services/nodemailer.js";
 import errorHandler from "./middleware/errorHandler.js";
+import s3Service from "./services/s3.js";
 
 const server = http.createServer(app);
 
-Promise.all([connectDB(), redisClient.ping(), transporter.verify()])
+Promise.all([connectDB(), redisClient.ping(), transporter.verify(), s3Service()])
 	.then(() => {
 		server.listen(env.PORT, () => {
 			logger.info(`Server is running on port ${env.PORT}`);

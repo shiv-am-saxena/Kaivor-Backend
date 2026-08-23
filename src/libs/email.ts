@@ -1,8 +1,8 @@
-import { transporter } from "../../../services/nodemailer.js";
-import logger from "../../../libs/logger.js";
-import ApiError from "../../../utils/ApiError.js";
+import { transporter } from "../services/nodemailer.js";
+import logger from "./logger.js";
+import ApiError from "../utils/ApiError.js";
 import Mail from "nodemailer/lib/mailer/index.js";
-import { env } from "../../../config/index.js";
+import { env } from "../config/index.js";
 
 export const sendVerificationEmail = async (
 	userEmail: string,
@@ -39,10 +39,9 @@ export const sendVerificationEmail = async (
 		return true;
 	} catch (error) {
 		logger.error("Error sending verification email:", error);
-		throw new ApiError(503,"Could not send verification email");
+		throw new ApiError(503, "Could not send verification email");
 	}
 };
-
 
 export const sendResetPasswordEmail = async (
 	userEmail: string,

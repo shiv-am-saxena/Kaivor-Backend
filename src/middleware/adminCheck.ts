@@ -6,7 +6,7 @@ import UserModel from "../models/user.model.js";
 import logger from "../libs/logger.js";
 
 // Middleware to check if the user is logged in by verifying the access token
-export const isLoggedIn = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
+export const adminAuthMiddleware = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
 	logger.info(req.cookies); // Log the cookies for debugging purposes
 	const token = req.headers.authorization?.split(" ")[1] || req.cookies.accessToken; // Extract the token from the Authorization header
 	logger.info(token); // Log the token for debugging purposes
@@ -23,10 +23,11 @@ export const isLoggedIn = asyncHandler(async (req: Request, res: Response, next:
 	if (!user) {
 		throw new ApiError(404, "User not found. Please log in again.");
 	}
-	//Only users can access the routes protected by this middleware
-	if (user.role !== "user" && user.role !== "admin") {
+
+	if (user.role !== "admin") {
 		throw new ApiError(403, "You are not authorized to access this resource.");
 	}
+
 	req.user = user; // Attach the user object to the request for further use
 
 	next(); // Proceed to the next middleware or route handler
