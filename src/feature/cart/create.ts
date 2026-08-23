@@ -34,10 +34,10 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 	}
 	//New Product to be inserted in the cart
 	const newProductAddOn = {
-		productId,
-		quantity,
+		productId: new mongoose.Types.ObjectId(productId),
+		quantity: Number(quantity),
 		size,
-		variant: variantId
+		variant: new mongoose.Types.ObjectId(variantId)
 	};
 	const existingCart = await CartModel.findOne({ userId: _id, orderPlaced: false }); // checking if user already have an active cart
 
@@ -60,6 +60,7 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 				throw new ApiError(500, "Failed to update cart");
 			}
 			res.status(200).json(new ApiResponse(200, cart, "Cart updated successfully"));
+			return;
 		}
 		//this will push the new product into the existing cart if user has already an active cart as well as the cart contains more than 0 products inside it
 		const cart = await existingCart.updateOne({
@@ -71,6 +72,7 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 			throw new ApiError(500, "Failed to update cart");
 		}
 		res.status(200).json(new ApiResponse(200, cart, "Cart updated successfully"));
+		return;
 	}
 
 	// if user doesn't have any active cart this will create a new cart and add the new product into it.

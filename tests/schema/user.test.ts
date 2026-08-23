@@ -3,7 +3,10 @@ import { connect, disconnect, clearCollections } from "../db/test.js";
 import { describe, it, expect, beforeAll, afterAll, afterEach } from "@jest/globals";
 
 describe("UserModel Integration & Unique Constraints", () => {
-	beforeAll(connect);
+	beforeAll(async () => {
+		await connect();
+		await UserModel.init();
+	});
 
 	afterAll(disconnect);
 

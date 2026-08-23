@@ -21,15 +21,18 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 
 	const cacheKey = `products:page:${page}:limit:${limit}`;
 
-	// Check if cached data exists in Redis
-	const cachedData = await redisClient.get(cacheKey);
-
-	if (cachedData) {
-		const parsedData = JSON.parse(cachedData);
-		res.status(200).json(
-			new ApiResponse(200, parsedData, "Products fetched successfully (from cache)")
-		);
-		return;
+	// Check if cached data exists in Redis (graceful fallback if Redis is down)
+	try {
+		const cachedData = await redisClient.get(cacheKey);
+		if (cachedData) {
+			const parsedData = JSON.parse(cachedData);
+			res.status(200).json(
+				new ApiResponse(200, parsedData, "Products fetched successfully (from cache)")
+			);
+			return;
+		}
+	} catch (error) {
+		// Log and fallback to DB query if Redis fails
 	}
 
 	// Fetch total product count and paginated products concurrently
@@ -55,7 +58,11 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 	};
 
 	// Cache the result in Redis for 2 hours (7200 seconds)
-	await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
+	try {
+		await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
+	} catch (error) {
+		// Fallthrough if cache set fails
+	}
 
 	res.status(200).json(new ApiResponse(200, responseData, "Products fetched successfully"));
 });
@@ -232,14 +239,18 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 	const cacheKey = `product:${productId}`;
 
 	// Check if product exists in Redis cache
-	const cachedProduct = await redisClient.get(cacheKey);
+	try {
+		const cachedProduct = await redisClient.get(cacheKey);
 
-	if (cachedProduct) {
-		const parsedProduct = JSON.parse(cachedProduct);
-		res.status(200).json(
-			new ApiResponse(200, parsedProduct, "Product fetched successfully (from cache)")
-		);
-		return;
+		if (cachedProduct) {
+			const parsedProduct = JSON.parse(cachedProduct);
+			res.status(200).json(
+				new ApiResponse(200, parsedProduct, "Product fetched successfully (from cache)")
+			);
+			return;
+		}
+	} catch (error) {
+		// Log and fallback to DB query if Redis fails
 	}
 
 	const product = await ProductModel.findById(productId).populate("variants");
@@ -249,7 +260,11 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 	}
 
 	// Cache product in Redis for 5 minutes (300 seconds)
-	await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
+	try {
+		await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
+	} catch (error) {
+		// Fallthrough if cache set fails
+	}
 
 	res.status(200).json(new ApiResponse(200, product, "Product fetched successfully"));
 });

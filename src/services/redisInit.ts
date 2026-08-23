@@ -5,7 +5,10 @@ import logger from "../libs/logger.js";
 const redisClient = new Redis({
 	port: env.REDIS_PORT,
 	host: env.REDIS_HOST,
-	password: env.REDIS_PASSWORD
+	password: env.REDIS_PASSWORD,
+	lazyConnect: env.NODE_ENV === "test",
+	maxRetriesPerRequest: env.NODE_ENV === "test" ? 0 : undefined,
+	enableOfflineQueue: env.NODE_ENV !== "test"
 });
 
 redisClient.on("error", (err) => {

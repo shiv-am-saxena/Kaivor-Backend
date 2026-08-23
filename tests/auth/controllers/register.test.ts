@@ -6,12 +6,20 @@ import { describe, it, expect, jest, beforeEach, beforeAll } from "@jest/globals
 // This guarantees the real DB/Redis files are NEVER executed, fixing the hanging promises!
 jest.unstable_mockModule("../../../src/libs/token.js", () => ({
 	generateAccessToken: jest.fn(),
+	generateRefreshToken: jest.fn(),
 	generateResetPasswordToken: jest.fn(),
-	verifyResetPasswordToken: jest.fn()
+	verifyResetPasswordToken: jest.fn(),
+	verifyRefreshToken: jest.fn()
 }));
 
-jest.unstable_mockModule("../../../src/feature/auth/services/email.js", () => ({
-	sendVerificationEmail: jest.fn()
+jest.unstable_mockModule("../../../src/libs/email.js", () => ({
+	sendVerificationEmail: jest.fn(),
+	sendResetPasswordEmail: jest.fn()
+}));
+
+jest.unstable_mockModule("../../../src/feature/auth/services/bcrypt.js", () => ({
+	hashPassword: jest.fn(),
+	comparePassword: jest.fn()
 }));
 
 jest.unstable_mockModule("../../../src/models/user.model.js", () => ({
@@ -24,6 +32,7 @@ jest.unstable_mockModule("../../../src/models/user.model.js", () => ({
 
 jest.unstable_mockModule("../../../src/services/redisInit.js", () => ({
 	default: {
+		get: jest.fn(),
 		exists: jest.fn(),
 		setex: jest.fn()
 	}
@@ -43,7 +52,7 @@ describe("Auth Controllers", () => {
 	beforeAll(async () => {
 		// 2. Dynamically import everything AFTER the mocks are registered in the VM
 		tokenUtils = await import("../../../src/libs/token.js");
-		emailService = await import("../../../src/feature/auth/services/email.js");
+		emailService = await import("../../../src/libs/email.js");
 		UserModel = (await import("../../../src/models/user.model.js")).default;
 		redisClient = (await import("../../../src/services/redisInit.js")).default;
 		authController =
@@ -56,7 +65,9 @@ describe("Auth Controllers", () => {
 		res = {
 			status: jest.fn().mockReturnThis() as any,
 			json: jest.fn() as any,
-			redirect: jest.fn() as any
+			redirect: jest.fn() as any,
+			cookie: jest.fn().mockReturnThis() as any,
+			clearCookie: jest.fn().mockReturnThis() as any
 		};
 		next = jest.fn();
 	});
@@ -225,7 +236,12 @@ describe("Auth Controllers", () => {
 
 			await authController.registerWithEmail(req as Request, res as Response);
 
-			expect(UserModel.create).toHaveBeenCalledWith(req.body);
+			expect(UserModel.create).toHaveBeenCalledWith(
+				expect.objectContaining({
+					fullName: req.body.fullName,
+					email: req.body.email
+				})
+			);
 			expect(emailService.sendVerificationEmail).toHaveBeenCalledWith(
 				req.body.email,
 				"fake-token"
@@ -271,35 +287,39 @@ describe("Auth Controllers", () => {
 			);
 		});
 
-		it("should pass ApiError(400) if token is not found in Redis", async () => {
+		it("should pass ApiError(400) if token has already been used in Redis", async () => {
 			tokenUtils.verifyResetPasswordToken.mockReturnValue({ id: "userId123" });
-			redisClient.exists.mockResolvedValue(0);
+			redisClient.get.mockResolvedValue("verified");
 
 			await authController.verifyEmail(req as Request, res as Response, next as NextFunction);
 
-			expect(redisClient.exists).toHaveBeenCalledWith("verificationToken:userId123");
-			expect.objectContaining({
-				statusCode: 400,
-				message: "Verification token has expired used or is invalid"
-			});
+			expect(redisClient.get).toHaveBeenCalledWith("verificationToken:userId123");
+			expect(next).toHaveBeenCalledWith(
+				expect.objectContaining({
+					statusCode: 400,
+					message: "Verification token has expired used or is invalid"
+				})
+			);
 		});
 
 		it("should pass ApiError(404) if user is not found in the database", async () => {
 			tokenUtils.verifyResetPasswordToken.mockReturnValue({ id: "userId123" });
-			redisClient.exists.mockResolvedValue(1);
+			redisClient.get.mockResolvedValue(null);
 			UserModel.findByIdAndUpdate.mockResolvedValue(null);
 
 			await authController.verifyEmail(req as Request, res as Response, next as NextFunction);
 
-			expect.objectContaining({
-				statusCode: 404,
-				message: "User not found"
-			});
+			expect(next).toHaveBeenCalledWith(
+				expect.objectContaining({
+					statusCode: 404,
+					message: "User not found"
+				})
+			);
 		});
 
 		it("should successfully verify the user and update Redis", async () => {
 			tokenUtils.verifyResetPasswordToken.mockReturnValue({ id: "userId123" });
-			redisClient.exists.mockResolvedValue(1);
+			redisClient.get.mockResolvedValue(null);
 			redisClient.setex.mockResolvedValue("OK");
 			UserModel.findByIdAndUpdate.mockResolvedValue({
 				_id: "userId123",

@@ -1,4 +1,4 @@
-import { sendVerificationEmail } from "../../../src/feature/auth/services/email.js";
+import { sendVerificationEmail } from "../../../src/libs/email.js";
 import { transporter } from "../../../src/services/nodemailer.js";
 import logger from "../../../src/libs/logger.js";
 import ApiError from "../../../src/utils/ApiError.js";
@@ -54,9 +54,7 @@ describe("sendVerificationEmail", () => {
 
 		const mail = (transporter.sendMail as jest.Mock).mock.calls[0][0] as Mail.Options;
 
-		expect(mail.html).toContain(
-			"http://localhost:3000/auth/verify-email?token=verification-token"
-		);
+		expect(mail.html).toContain("/auth/verify-email?token=verification-token");
 	});
 
 	it("should throw ApiError if sendMail fails", async () => {

@@ -24,7 +24,8 @@ const consoleLogFormat = format.combine(
 		const styledLevel = colorizeLevel(level.toUpperCase());
 		const styledTimestamp = chalk.gray(`[${timestamp}]`);
 
-		return `${styledTimestamp} ${styledLevel}: ${message}`;
+		const messageStr = typeof message === "object" ? JSON.stringify(message) : String(message);
+		return `${styledTimestamp} ${styledLevel}: ${messageStr}`;
 	})
 );
 

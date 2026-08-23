@@ -10,7 +10,8 @@ import passport from "./feature/auth/services/passport.js";
 import adminAuthRouter from "./routes/admin/auth.route.js";
 import adminProductRouter from "./routes/admin/products.route.js";
 import cartRouter from "./routes/cart.route.js";
-import productRouter from "./routes/products.route.js"
+import productRouter from "./routes/products.route.js";
+import errorHandler from "./middleware/errorHandler.js";
 const app = express();
 
 app.use(helmet()); // Security headers
@@ -32,5 +33,7 @@ app.use("/api/products", productRouter);
 app.use("/api/cart", cartRouter); // Mount cart routes
 app.use("/api/admin/auth", adminAuthRouter); // Mount admin authentication routes
 app.use("/api/admin/products", adminProductRouter); // Mount admin products routes
+
+app.use(errorHandler); // Global error handling middleware
 
 export default app;

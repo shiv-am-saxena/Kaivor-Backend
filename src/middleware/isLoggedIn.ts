@@ -7,9 +7,9 @@ import logger from "../libs/logger.js";
 
 // Middleware to check if the user is logged in by verifying the access token
 export const isLoggedIn = asyncHandler(async (req: Request, res: Response, next: NextFunction) => {
-	logger.info(req.cookies); // Log the cookies for debugging purposes
+	logger.info(JSON.stringify(req.cookies || {})); // Log the cookies for debugging purposes
 	const token = req.headers.authorization?.split(" ")[1] || req.cookies.accessToken; // Extract the token from the Authorization header
-	logger.info(token); // Log the token for debugging purposes
+	logger.info(token || "No token provided"); // Log the token for debugging purposes
 	if (!token) {
 		throw new ApiError(401, "You are not logged in. Please log in to access this resource.");
 	}

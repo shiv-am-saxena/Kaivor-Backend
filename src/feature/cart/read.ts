@@ -24,7 +24,7 @@ export const getCart = asyncHandler(async (req: Request, res: Response) => {
     const userCart = await CartModel.findOne({
         userId: _id,
         orderPlaced: false
-    }).populate("products.variant", "_id name frontFace").populate("products.productId", "_id name");
+    }).populate("products.variant").populate("products.productId");
     if(!userCart){
         throw new ApiError(404, "Cart not found");
     }

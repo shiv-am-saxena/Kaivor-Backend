@@ -11,11 +11,13 @@ jest.unstable_mockModule("../../../src/libs/token.js", () => ({
 	verifyResetPasswordToken: jest.fn()
 }));
 
-jest.unstable_mockModule("../../../src/feature/auth/services/email.js", () => ({
-	sendVerificationEmail: jest.fn()
+jest.unstable_mockModule("../../../src/libs/email.js", () => ({
+	sendVerificationEmail: jest.fn(),
+	sendResetPasswordEmail: jest.fn()
 }));
 
 jest.unstable_mockModule("../../../src/feature/auth/services/bcrypt.js", () => ({
+	hashPassword: jest.fn(),
 	comparePassword: jest.fn()
 }));
 
@@ -67,7 +69,7 @@ describe("Auth Controllers", () => {
 
 	beforeAll(async () => {
 		tokenUtils = await import("../../../src/libs/token.js");
-		emailService = await import("../../../src/feature/auth/services/email.js");
+		emailService = await import("../../../src/libs/email.js");
 		bcryptService = await import("../../../src/feature/auth/services/bcrypt.js");
 		UserModel = (await import("../../../src/models/user.model.js")).default;
 		redisClient = (await import("../../../src/services/redisInit.js")).default;
@@ -166,9 +168,7 @@ describe("Auth Controllers", () => {
 			);
 
 			expect(tokenUtils.generateAccessToken).toHaveBeenCalledWith(mockUser);
-			expect(res.redirect).toHaveBeenCalledWith(
-				`${env.CORS_ORIGIN}/auth/callback?token=mockAccessToken`
-			);
+			expect(res.redirect).toHaveBeenCalledWith(`${env.CORS_ORIGIN}/auth/callback`);
 		});
 	});
 
@@ -281,59 +281,6 @@ describe("Auth Controllers", () => {
 					message: "Login successful."
 				})
 			);
-		});
-	});
-
-	describe("verifyEmail", () => {
-		beforeEach(() => {
-			req.query = { token: "validToken" };
-		});
-
-		it("should pass 400 if token is missing", async () => {
-			(req.query as { token?: string }).token = undefined;
-
-			await authController.verifyEmail(req as Request, res as Response, next as NextFunction);
-
-			expect(next).toHaveBeenCalledWith(
-				expect.objectContaining({
-					statusCode: 400,
-					message: "Verification token is required"
-				})
-			);
-		});
-
-		it("should pass 400 if token is invalid or expired in Redis", async () => {
-			tokenUtils.verifyResetPasswordToken.mockReturnValue({ id: "user123" });
-			redisClient.exists.mockResolvedValue(0);
-
-			await authController.verifyEmail(req as Request, res as Response, next as NextFunction);
-
-			expect(next).toHaveBeenCalledWith(
-				expect.objectContaining({
-					statusCode: 400,
-					message: "Verification token has expired used or is invalid"
-				})
-			);
-		});
-
-		it("should successfully verify email and update DB", async () => {
-			tokenUtils.verifyResetPasswordToken.mockReturnValue({ id: "user123" });
-			redisClient.exists.mockResolvedValue(1);
-			UserModel.findByIdAndUpdate.mockResolvedValue({ _id: "user123" });
-
-			await authController.verifyEmail(req as Request, res as Response, next as NextFunction);
-
-			expect(UserModel.findByIdAndUpdate).toHaveBeenCalledWith(
-				"user123",
-				{ isVerified: { email: true } },
-				{ new: true }
-			);
-			expect(redisClient.setex).toHaveBeenCalledWith(
-				"verificationToken:user123",
-				3600,
-				"verified"
-			);
-			expect(res.status).toHaveBeenCalledWith(200);
 		});
 	});
 
@@ -494,9 +441,11 @@ describe("Auth Controllers", () => {
 
 		it("should pass 401 if refresh token does not match DB", async () => {
 			tokenUtils.verifyRefreshToken.mockReturnValue({ id: "user123" });
-			UserModel.findById.mockResolvedValue({
-				_id: "user123",
-				refreshToken: "differentToken"
+			UserModel.findById.mockReturnValue({
+				select: jest.fn().mockResolvedValue({
+					_id: "user123",
+					refreshToken: "differentToken"
+				})
 			});
 
 			await authController.regenAccessToken(
@@ -515,10 +464,12 @@ describe("Auth Controllers", () => {
 
 		it("should generate new access token on success", async () => {
 			tokenUtils.verifyRefreshToken.mockReturnValue({ id: "user123" });
-			UserModel.findById.mockResolvedValue({
-				_id: "user123",
-				email: "test@test.com",
-				refreshToken: "refresh123"
+			UserModel.findById.mockReturnValue({
+				select: jest.fn().mockResolvedValue({
+					_id: "user123",
+					email: "test@test.com",
+					refreshToken: "refresh123"
+				})
 			});
 			tokenUtils.generateAccessToken.mockReturnValue("newAccess123");
 
