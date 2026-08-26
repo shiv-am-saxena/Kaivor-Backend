@@ -53,11 +53,10 @@ const ProductSchema = new mongoose.Schema<IProduct>(
 			type: [String],
 			required: true
 		},
-		variants: {
-			type: [mongoose.Schema.Types.ObjectId],
+		variants: [{
+			type: mongoose.Schema.Types.ObjectId,
 			ref: "Variant",
-			required: true
-		},
+		}],
 		size: {
 			type: [String],
 			required: true

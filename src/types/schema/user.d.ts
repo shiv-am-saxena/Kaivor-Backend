@@ -1,3 +1,5 @@
+import { Types } from "mongoose";
+
 export default interface IUser {
     _id: string; // Unique identifier for the user
     fullName: string; // User's full name
@@ -16,8 +18,8 @@ export default interface IUser {
     updatedAt: Date; // Timestamp indicating when the user was last updated
 }
 
-export default interface IUserAddressBook{
-    _id: string; // Unique identifier for the address book entry
+export interface IUserAddressBook{
+    _id: Types.ObjectId; // Unique identifier for the address book entry
     name: string; // Name associated with the address book entry
     phoneNumber: string; // Phone number associated with the address book entry
     address: {

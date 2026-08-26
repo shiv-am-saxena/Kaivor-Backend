@@ -3,6 +3,11 @@ import ICart from "../types/schema/cart.js";
 
 const CartSchema = new mongoose.Schema<ICart>(
 	{
+		cartId:{
+			type: String,
+			required: true,
+			unique: true,
+		},
 		userId: {
 			type: mongoose.Schema.Types.ObjectId,
 			ref: "User",

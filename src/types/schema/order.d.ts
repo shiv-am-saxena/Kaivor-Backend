@@ -4,7 +4,8 @@ export default interface IOrder {
 	_id: ObjectId; // Unique identifier for the order
 	userId: ObjectId; // Identifier for the user who placed the order
 	cartId: ObjectId; // Identifier for the cart associated with the order
-	paymentId: ObjectId; // Identifier for the payment associated with the order
+	orderConfirmation: boolean; // If prepaid the by default the value id true if cod then it will wait for the confirmation of the user after the confirmation the order will be sent to the supplier
+	paymentId?: ObjectId; // Identifier for the payment associated with the order
 	orderType: string; // Type of the order (e.g., online, in-store)
 	addressId: ObjectId; // Identifier for the shipping address associated with the order
 	orderStatus: string; // Status of the order (e.g., pending, shipped, delivered)

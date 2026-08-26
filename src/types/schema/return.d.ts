@@ -14,7 +14,7 @@ export default interface IReturn {
     shipmentId: ObjectId; // Identifier for the shipment associated with the return
 }
 
-export default interface IReplacementInfo {
+export interface IReplacementInfo {
     productId: ObjectId; // Identifier for the replacement product
     variant: ObjectId; // Variant details of the replacement product
     customerVideo?: string; // Video provided by the customer for the replacement product, if any

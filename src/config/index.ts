@@ -26,7 +26,9 @@ const envSchema = z.object({
     AWS_REGION: z.string().min(1, { message: "AWS_REGION is required" }), // Validate that AWS_REGION is not empty
     AWS_ACCESS_KEY_ID: z.string().min(1, { message: "AWS_ACCESS_KEY_ID is required" }), // Validate that AWS_ACCESS_KEY_ID is not empty
     AWS_SECRET_ACCESS_KEY: z.string().min(1, { message: "AWS_SECRET_ACCESS_KEY is required" }), // Validate that AWS_SECRET_ACCESS_KEY is not empty
-    AWS_S3_BUCKET_NAME: z.string().min(1, { message: "AWS_S3_BUCKET_NAME is required" }) // Validate that AWS_S3_BUCKET_NAME is not empty
+    AWS_S3_BUCKET_NAME: z.string().min(1, { message: "AWS_S3_BUCKET_NAME is required" }), // Validate that AWS_S3_BUCKET_NAME is not empty
+    RAZORPAY_API_KEY: z.string().min(1, { message: "RAZORPAY_API_KEY is required" }), // Validate that RAZORPAY_API_KEY is not empty
+    RAZORPAY_API_SECRET: z.string().min(1, { message: "RAZORPAY_API_SECRET is required" }), // Validate that RAZORPAY_API_SECRET is not empty
 });
 
 export const env = {
@@ -51,5 +53,7 @@ export const env = {
     AWS_REGION: envSchema.parse(process.env).AWS_REGION,
     AWS_ACCESS_KEY_ID: envSchema.parse(process.env).AWS_ACCESS_KEY_ID,
     AWS_SECRET_ACCESS_KEY: envSchema.parse(process.env).AWS_SECRET_ACCESS_KEY,
-    AWS_S3_BUCKET_NAME: envSchema.parse(process.env).AWS_S3_BUCKET_NAME
+    AWS_S3_BUCKET_NAME: envSchema.parse(process.env).AWS_S3_BUCKET_NAME,
+    RAZORPAY_API_KEY: envSchema.parse(process.env).RAZORPAY_API_KEY,
+    RAZORPAY_API_SECRET: envSchema.parse(process.env).RAZORPAY_API_SECRET
 }

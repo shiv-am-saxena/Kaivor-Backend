@@ -6,8 +6,9 @@ import redisClient from "../../../../services/redisInit.js";
 import { asyncHandler } from "../../../../utils/AsyncHandler.js";
 import ApiResponse from "../../../../utils/ApiResponse.js";
 import ApiError from "../../../../utils/ApiError.js";
+import IUser from "../../../../types/schema/user.js";
 
-/* 
+/*
 	****Get all products with pagination (Infinite Scroll format)****
 	@request_query: page (default: 1), limit (default: 10)
 	@response: { products, pagination: { totalProducts, currentPage, totalPages, limit, hasMore, nextPage } }
@@ -15,30 +16,44 @@ import ApiError from "../../../../utils/ApiError.js";
 	@endpoint: GET /api/admin/product/all
 */
 export const getAllProducts = asyncHandler(async (req: Request, res: Response) => {
+	const userRole = (req?.user as IUser)?.role || "user";
 	const page = Math.max(1, Number(req.query.page) || 1);
 	const limit = Math.max(1, Number(req.query.limit) || 10);
 	const skip = (page - 1) * limit;
 
-	const cacheKey = `products:page:${page}:limit:${limit}`;
+	// Include user role in cache key to ensure role-based response segregation
+	const cacheKey = `products:role:${userRole}:page:${page}:limit:${limit}`;
 
 	// Check if cached data exists in Redis (graceful fallback if Redis is down)
-	try {
-		const cachedData = await redisClient.get(cacheKey);
-		if (cachedData) {
-			const parsedData = JSON.parse(cachedData);
-			res.status(200).json(
-				new ApiResponse(200, parsedData, "Products fetched successfully (from cache)")
-			);
-			return;
-		}
-	} catch (error) {
-		// Log and fallback to DB query if Redis fails
+	const cachedData = await redisClient.get(cacheKey);
+	if (cachedData) {
+		const parsedData = JSON.parse(cachedData);
+		res.status(200).json(
+			new ApiResponse(200, parsedData, "Products fetched successfully (from cache)")
+		);
+		return;
 	}
 
-	// Fetch total product count and paginated products concurrently
+	// Select fields based on user role:
+	// - admin: all fields
+	// - supplier/seller: selected seller fields (including cost and asset link, excluding admin internal fields)
+	// - user: public fields only (excluding supplierCost, assetLink, supplierId, supplierEmail)
+	let projection: string;
+	if (userRole === "admin") {
+		projection = "";
+	}
+	if (userRole === "supplier") {
+		projection =
+			"title inStock description amount discount baseImage supplierId supplierEmail assetLink supplierCost fabric tag variants size createdAt updatedAt";
+	} else {
+		// Default "user" role
+		projection = "title inStock amount discount baseImage tag variants";
+	}
+
+	// Fetch total product count and paginated products concurrently with projection
 	const [totalProducts, products] = await Promise.all([
 		ProductModel.countDocuments(),
-		ProductModel.find().skip(skip).limit(limit).sort({ createdAt: -1 })
+		ProductModel.find({}, projection).skip(skip).limit(limit).sort({ createdAt: -1 })
 	]);
 
 	const totalPages = Math.ceil(totalProducts / limit);
@@ -58,18 +73,14 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 	};
 
 	// Cache the result in Redis for 2 hours (7200 seconds)
-	try {
-		await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
-	} catch (error) {
-		// Fallthrough if cache set fails
-	}
+	await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
 
 	res.status(200).json(new ApiResponse(200, responseData, "Products fetched successfully"));
 });
 
-/* 
+/*
 	****Search and Filter Products****
-	@request_query: 
+	@request_query:
 	  - query (free-text search across title, description, fabric, tag, size, variant color)
 	  - color, size, tag, fabric (specific category/attribute filters)
 	  - minPrice, maxPrice (price amount filter)
@@ -202,10 +213,26 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
 	const limitNum = Math.max(1, Number(limit) || 10);
 	const skip = (pageNum - 1) * limitNum;
 
-	// Execute queries in parallel
+	const userRole = (req?.user as IUser)?.role || "user";
+	let projection: string;
+	if (userRole === "admin") {
+		projection = ""; // Return all fields
+	} else if (userRole === "supplier") {
+		projection =
+			"title inStock description amount discount baseImage supplierId supplierEmail assetLink supplierCost fabric tag variants size createdAt updatedAt";
+	} else {
+		// Default "user" role
+		projection = "title inStock description amount discount baseImage fabric tag variants size";
+	}
+
+	// Execute queries in parallel with projection
 	const [totalProducts, products] = await Promise.all([
 		ProductModel.countDocuments(filter),
-		ProductModel.find(filter).skip(skip).limit(limitNum).populate("variants").sort(sortOption)
+		ProductModel.find(filter, projection)
+			.skip(skip)
+			.limit(limitNum)
+			.populate("variants")
+			.sort(sortOption)
 	]);
 
 	const totalPages = Math.ceil(totalProducts / limitNum);
@@ -231,40 +258,48 @@ export const searchProducts = asyncHandler(async (req: Request, res: Response) =
 
 export const getProductById = asyncHandler(async (req: Request, res: Response) => {
 	const { productId } = req.params;
+	const userRole = (req?.user as IUser)?.role || "user";
 
-	if (!productId || typeof productId !== "string" || !mongoose.Types.ObjectId.isValid(productId)) {
+	if (
+		!productId ||
+		typeof productId !== "string" ||
+		!mongoose.Types.ObjectId.isValid(productId)
+	) {
 		throw new ApiError(400, "Invalid Product ID format");
 	}
 
-	const cacheKey = `product:${productId}`;
+	const cacheKey = `product:role:${userRole}:${productId}`;
 
 	// Check if product exists in Redis cache
-	try {
-		const cachedProduct = await redisClient.get(cacheKey);
+	const cachedProduct = await redisClient.get(cacheKey);
 
-		if (cachedProduct) {
-			const parsedProduct = JSON.parse(cachedProduct);
-			res.status(200).json(
-				new ApiResponse(200, parsedProduct, "Product fetched successfully (from cache)")
-			);
-			return;
-		}
-	} catch (error) {
-		// Log and fallback to DB query if Redis fails
+	if (cachedProduct) {
+		const parsedProduct = JSON.parse(cachedProduct);
+		res.status(200).json(
+			new ApiResponse(200, parsedProduct, "Product fetched successfully (from cache)")
+		);
+		return;
 	}
 
-	const product = await ProductModel.findById(productId).populate("variants");
+	let projection: string;
+	if (userRole === "admin") {
+		projection = ""; // Return all fields
+	} else if (userRole === "supplier") {
+		projection =
+			"title inStock baseImage supplierId supplierEmail assetLink supplierCost fabric variants size";
+	} else {
+		// Default "user" role
+		projection = "title inStock description amount discount fabric tag variants size";
+	}
+
+	const product = await ProductModel.findById(productId, projection).populate("variants");
 
 	if (!product) {
 		throw new ApiError(404, "Product not found");
 	}
 
 	// Cache product in Redis for 5 minutes (300 seconds)
-	try {
-		await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
-	} catch (error) {
-		// Fallthrough if cache set fails
-	}
+	await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
 
 	res.status(200).json(new ApiResponse(200, product, "Product fetched successfully"));
 });

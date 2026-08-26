@@ -6,6 +6,8 @@ import IUser from "../../types/schema/user.js";
 import CartModel from "../../models/cart.model.js";
 import logger from "../../libs/logger.js";
 import mongoose from "mongoose";
+import ProductModel from "../../models/product.model.js";
+import { generateCartId } from "../../libs/idGen.js";
 
 /*
     ****Create the Cart****
@@ -32,11 +34,27 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 	) {
 		throw new ApiError(400, "All fields are required");
 	}
+
+	// check if that variant actually belongs to the provided product and is inStock
+
+	const availabilityCheck = await ProductModel.findById(productId).select("variants inStock");
+	if (!availabilityCheck) {
+		throw new ApiError(404, "Product not found");
+	}
+	const isVariantAvailable = availabilityCheck.variants.some(
+		(variant) => variant._id.toString() === variantId
+	);
+	if (!isVariantAvailable) {
+		throw new ApiError(404, "Variant not found");
+	}
+	if (!availabilityCheck.inStock) {
+		throw new ApiError(404, "Not in stock currently");
+	}
 	//New Product to be inserted in the cart
 	const newProductAddOn = {
 		productId: new mongoose.Types.ObjectId(productId),
 		quantity: Number(quantity),
-		size,
+		size: String(size),
 		variant: new mongoose.Types.ObjectId(variantId)
 	};
 	const existingCart = await CartModel.findOne({ userId: _id, orderPlaced: false }); // checking if user already have an active cart
@@ -74,9 +92,19 @@ export const addProductToCart = asyncHandler(async (req: Request, res: Response)
 		res.status(200).json(new ApiResponse(200, cart, "Cart updated successfully"));
 		return;
 	}
+	let cartId: string = generateCartId();
+	//check if this cart id already exist or not
+
+	let existingCartId = await CartModel.exists({ cartId });
+
+	while (existingCartId) {
+		cartId = generateCartId();
+		existingCartId = await CartModel.exists({ cartId });
+	}
 
 	// if user doesn't have any active cart this will create a new cart and add the new product into it.
 	const cart = await CartModel.create({
+		cartId,
 		userId: new mongoose.Types.ObjectId(_id),
 		products: [newProductAddOn]
 	});

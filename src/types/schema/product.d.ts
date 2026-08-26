@@ -20,7 +20,7 @@ export default interface IProduct {
 	updatedAt: Date;
 }
 
-export default interface IVariant {
+export interface IVariant {
 	_id: string;
 	hexCode: string;
 	color: string;

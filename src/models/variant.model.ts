@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import IVariant from "../types/schema/product.js";
+import { IVariant } from "../types/schema/product.js";
 
 const VariantSchema = new mongoose.Schema<IVariant>(
 	{

@@ -4,10 +4,12 @@ import {
 	getProductById,
 	searchProducts
 } from "../feature/admin/controllers/products/read.js";
+import optAuth from "../middleware/optionalAuth.js";
 
 const router = Router();
 
-router.get("/", getAllProducts);
-router.get("/search", searchProducts);
-router.get("/:productId", getProductById);
+router.get("/", optAuth, getAllProducts);
+router.get("/search", optAuth, searchProducts);
+router.get("/:productId", optAuth, getProductById);
+
 export default router;
