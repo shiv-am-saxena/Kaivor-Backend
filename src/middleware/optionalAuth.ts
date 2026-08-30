@@ -6,15 +6,16 @@ import UserModel from "../models/user.model.js";
 import ApiError from "../utils/ApiError.js";
 
 const optAuth = asyncHandler(async (req: Request, _res: Response, next: NextFunction) => {
-	const { accessToken } = req.cookies;
+	const { accessToken, refreshToken } = req.cookies;
 
-	if (!accessToken) {
+	if (!accessToken || !refreshToken) {
 		req.user = { role: "user" } as IUser;
 		next();
+		return;
 	}
 
 	const decoded = verifyAccessToken(accessToken);
-	const user = await UserModel.findById(decoded.userId).select("-password").lean();
+	const user = await UserModel.findById(decoded._id).select("-password").lean();
 	if (!user) {
 		throw new ApiError(401, "Unauthorized: User not found");
 	}

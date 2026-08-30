@@ -9,7 +9,7 @@ import { generateRandomString } from "../../services/fileName.js";
 import UserModel from "../../../../models/user.model.js";
 import mongoose from "mongoose";
 
-/* 
+/*
 	****Adding a new product by the admin****
 	@request_body: title, description, inStock, amount, discount, supplierEmail, supplierCost, fabric, tags, sizes, baseImage, assetFile
 	@request_files: baseImage (png), assetFile (zip)
@@ -145,7 +145,7 @@ export const addNewProduct = asyncHandler(async (req: Request, res: Response) =>
 	res.status(201).json(new ApiResponse(201, product, "Product created successfully"));
 });
 
-/* 
+/*
 	****Adding variants to a product by the admin****
 	@request_params: productId
 	@request_body:hexCode, color

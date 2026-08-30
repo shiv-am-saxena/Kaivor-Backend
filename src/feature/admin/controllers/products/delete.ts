@@ -6,6 +6,7 @@ import { deleteFile } from "../../services/s3.services.js";
 import VariantModel from "../../../../models/variant.model.js";
 import ApiResponse from "../../../../utils/ApiResponse.js";
 import logger from "../../../../libs/logger.js";
+import { invalidateProductCache } from "../../../../libs/cacheInvalidation.js";
 
 const IMAGE_FIELDS = ["frontFace", "backFace", "frontFull", "backFull"] as const;
 
@@ -23,28 +24,28 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 	if (!productId) {
 		throw new ApiError(400, "Product ID is required");
 	}
-	const product = await ProductModel.findById(productId);
+	const product = await ProductModel.findById(productId).populate("variants");
 	if (!product) {
 		throw new ApiError(404, "Product not found");
 	}
 
-	const variants = await VariantModel.find({
-		_id: {
-			$in: product.variants
-		}
-	});
+	const { variants } = product;
 
 	if (!variants) {
 		throw new ApiError(500, "Failed to delete product");
 	}
 
-	variants.forEach(async (variant) => {
-		await deleteFile(variant.frontFace);
-		await deleteFile(variant.backFace);
-		await deleteFile(variant.frontFull);
-		await deleteFile(variant.backFull);
-		await variant.deleteOne();
-	});
+	await Promise.all(
+		(variants as any[]).map(async (variant) => {
+			await Promise.all([
+				deleteFile(variant.frontFace),
+				deleteFile(variant.backFace),
+				deleteFile(variant.frontFull),
+				deleteFile(variant.backFull)
+			]);
+			await VariantModel.deleteOne({ _id: variant._id });
+		})
+	);
 
 	await Promise.all([deleteFile(product.baseImage), deleteFile(product.assetLink)]);
 
@@ -52,11 +53,11 @@ export const deleteProduct = asyncHandler(async (req: Request, res: Response) =>
 	if (!deletedProduct) {
 		throw new ApiError(500, "Failed to delete product");
 	}
-	res.status(201).json({
-		success: true,
-		message: "Product deleted successfully",
-		data: deletedProduct
-	});
+
+	// Invalidate single product and list caches in Redis
+	await invalidateProductCache(productId as string);
+
+	res.status(200).json(new ApiResponse(200, deletedProduct, "Product deleted successfully"));
 });
 
 /*
@@ -111,7 +112,11 @@ export const deleteSingleVariant = asyncHandler(async (req: Request, res: Respon
 	if (!deletedVariant) {
 		throw new ApiError(500, "Failed to delete variant");
 	}
-	res.status(201).json(new ApiResponse(201, product, "Variant deleted successfully"));
+
+	// Invalidate product cache in Redis
+	await invalidateProductCache(productId as string);
+
+	res.status(200).json(new ApiResponse(200, product, "Variant deleted successfully"));
 });
 
 /*
@@ -143,9 +148,7 @@ export const deleteSingleVariantImg = asyncHandler(async (req: Request, res: Res
 
 	const imageField = img as ImageField;
 
-	const variant = await VariantModel.findOne({
-		_id: variantId
-	});
+	const variant = await VariantModel.findById(variantId);
 
 	if (!variant) {
 		throw new ApiError(404, "Variant not found");
@@ -174,6 +177,9 @@ export const deleteSingleVariantImg = asyncHandler(async (req: Request, res: Res
 	variant[imageField] = "" as string;
 
 	const updatedVariant = await variant.save();
+
+	// Invalidate product cache in Redis
+	await invalidateProductCache(productId as string);
 
 	res.status(200).json(new ApiResponse(200, updatedVariant, "Image deleted successfully"));
 });

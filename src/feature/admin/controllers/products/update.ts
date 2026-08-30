@@ -5,6 +5,7 @@ import VariantModel from "../../../../models/variant.model.js";
 import ApiResponse from "../../../../utils/ApiResponse.js";
 import ProductModel from "../../../../models/product.model.js";
 import { deleteFile, uploadFile } from "../../services/s3.services.js";
+import { invalidateProductCache } from "../../../../libs/cacheInvalidation.js";
 
 /*
 	**** Update the variant of a specific Product by the admin****
@@ -40,9 +41,11 @@ export const updateVariant = asyncHandler(async (req: Request, res: Response) =>
 	if (!updatedVariant) {
 		throw new ApiError(500, "Failed to update variant");
 	}
+
+	await invalidateProductCache(productId as string);
+
 	res.status(201).json(new ApiResponse(201, updatedVariant, "Variant updated successfully"));
 });
-
 
 /*
     ****Update the Product****
@@ -55,57 +58,82 @@ export const updateVariant = asyncHandler(async (req: Request, res: Response) =>
     @endpoint: /api/admin/product/:productId
 */
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
-    const { productId } = req.params;
-    const { title, description, inStock, amount, discount, supplierCost, fabric, tags, sizes } = req.body;
-    if (
-        [productId, title, description, inStock, amount, discount, supplierCost, fabric, tags, sizes].some(
-            (field) => !field || (typeof field === "string" && field.trim() === "")
-        )
-    ) {
-        throw new ApiError(400, "All fields are required");
-    }
-    const tag: string[] = tags.split(",").map((e: string) => e.trim()).filter(Boolean);
-    const size: string[] = sizes.split(",").map((e: string) => e.trim()).filter(Boolean);
-    if(tag.length === 0){
-        throw new ApiError(400, "At least one tag is required");
-    }
-    if(size.length === 0){
-        throw new ApiError(400, "At least one size is required");
-    }
-    const files = req.files as {
-        [fieldname: string]: Express.Multer.File[];
-    } | undefined;
-    const baseImg = files?.baseImg?.[0];
-    if(baseImg && baseImg.mimetype !== "image/png"){
-        throw new ApiError(400, "Base image must be a PNG file");
-    }
+	const { productId } = req.params;
+	const { title, description, inStock, amount, discount, supplierCost, fabric, tags, sizes, isActive } =
+		req.body;
+	if (
+		[
+			isActive,
+			productId,
+			title,
+			description,
+			inStock,
+			amount,
+			discount,
+			supplierCost,
+			fabric,
+			tags,
+			sizes
+		].some((field) => !field || (typeof field === "string" && field.trim() === ""))
+	) {
+		throw new ApiError(400, "All fields are required");
+	}
+	const tag: string[] = tags
+		.split(",")
+		.map((e: string) => e.trim())
+		.filter(Boolean);
+	const size: string[] = sizes
+		.split(",")
+		.map((e: string) => e.trim())
+		.filter(Boolean);
+	if (tag.length === 0) {
+		throw new ApiError(400, "At least one tag is required");
+	}
+	if (size.length === 0) {
+		throw new ApiError(400, "At least one size is required");
+	}
+	const files = req.files as
+		| {
+				[fieldname: string]: Express.Multer.File[];
+		  }
+		| undefined;
+	const baseImg = files?.baseImg?.[0];
+	if (baseImg && baseImg.mimetype !== "image/png") {
+		throw new ApiError(400, "Base image must be a PNG file");
+	}
 
-    const product = await ProductModel.findById(productId);
-    if (!product) {
-        throw new ApiError(404, "Product not found");
-    }
-    if(baseImg){
-        const [, uploadAck] = await Promise.all([
-            deleteFile(product.baseImage), uploadFile(baseImg, product.baseImage)
-        ]);
-        if(!uploadAck){
-            throw new ApiError(500, "Failed to update Image");
-        }
-    }
+	const product = await ProductModel.findById(productId);
+	if (!product) {
+		throw new ApiError(404, "Product not found");
+	}
+	if (baseImg) {
+		const [, uploadAck] = await Promise.all([
+			deleteFile(product.baseImage),
+			uploadFile(baseImg, product.baseImage)
+		]);
+		if (!uploadAck) {
+			throw new ApiError(500, "Failed to update Image");
+		}
+	}
 
-    const updatedProduct = await product.updateOne({
-        title,
-        description,
-        inStock,
-        amount,
-        discount,
-        supplierCost,
-        fabric,
-        tag,
-        size
-    });
-    if (!updatedProduct) {
-        throw new ApiError(500, "Failed to update product");
-    }
-    res.status(201).json(new ApiResponse(201, updatedProduct, "Product updated successfully"));
+	const updatedProduct = await product.updateOne({
+		isActive,
+		title,
+		description,
+		inStock,
+		amount,
+		discount,
+		supplierCost,
+		fabric,
+		tag,
+		size
+	});
+	if (!updatedProduct) {
+		throw new ApiError(500, "Failed to update product");
+	}
+
+	// Invalidate product & product list cache from Redis
+	await invalidateProductCache(productId as string);
+
+	res.status(201).json(new ApiResponse(201, updatedProduct, "Product updated successfully"));
 });

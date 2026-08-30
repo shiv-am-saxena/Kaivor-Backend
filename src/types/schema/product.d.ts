@@ -2,6 +2,7 @@ import { Types } from "mongoose";
 
 export default interface IProduct {
 	_id: Types.ObjectId;
+	status: boolean;
 	title: string;
 	description: string;
 	inStock: boolean;

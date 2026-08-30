@@ -7,6 +7,7 @@ import { asyncHandler } from "../../../../utils/AsyncHandler.js";
 import ApiResponse from "../../../../utils/ApiResponse.js";
 import ApiError from "../../../../utils/ApiError.js";
 import IUser from "../../../../types/schema/user.js";
+import logger from "../../../../libs/logger.js";
 
 /*
 	****Get all products with pagination (Infinite Scroll format)****
@@ -16,7 +17,8 @@ import IUser from "../../../../types/schema/user.js";
 	@endpoint: GET /api/admin/product/all
 */
 export const getAllProducts = asyncHandler(async (req: Request, res: Response) => {
-	const userRole = (req?.user as IUser)?.role || "user";
+	const userRole = (req.user as IUser)?.role;
+	logger.info(`Fetching all products for role: ${userRole}`);
 	const page = Math.max(1, Number(req.query.page) || 1);
 	const limit = Math.max(1, Number(req.query.limit) || 10);
 	const skip = (page - 1) * limit;
@@ -26,7 +28,7 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 
 	// Check if cached data exists in Redis (graceful fallback if Redis is down)
 	const cachedData = await redisClient.get(cacheKey);
-	if (cachedData) {
+	if (cachedData && userRole !== "admin") {
 		const parsedData = JSON.parse(cachedData);
 		res.status(200).json(
 			new ApiResponse(200, parsedData, "Products fetched successfully (from cache)")
@@ -39,15 +41,14 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 	// - supplier/seller: selected seller fields (including cost and asset link, excluding admin internal fields)
 	// - user: public fields only (excluding supplierCost, assetLink, supplierId, supplierEmail)
 	let projection: string;
-	if (userRole === "admin") {
-		projection = "";
+	if (userRole === "user") {
+		projection = "title inStock amount discount baseImage tag variants";
 	}
 	if (userRole === "supplier") {
 		projection =
 			"title inStock description amount discount baseImage supplierId supplierEmail assetLink supplierCost fabric tag variants size createdAt updatedAt";
 	} else {
-		// Default "user" role
-		projection = "title inStock amount discount baseImage tag variants";
+		projection = "";
 	}
 
 	// Fetch total product count and paginated products concurrently with projection
@@ -72,9 +73,10 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 		}
 	};
 
-	// Cache the result in Redis for 2 hours (7200 seconds)
-	await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
-
+	if (userRole !== "admin") {
+		// Cache the result in Redis for 2 hours (7200 seconds)
+		await redisClient.set(cacheKey, JSON.stringify(responseData), "EX", 7200);
+	}
 	res.status(200).json(new ApiResponse(200, responseData, "Products fetched successfully"));
 });
 
@@ -273,7 +275,7 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 	// Check if product exists in Redis cache
 	const cachedProduct = await redisClient.get(cacheKey);
 
-	if (cachedProduct) {
+	if (cachedProduct && userRole !== "admin") {
 		const parsedProduct = JSON.parse(cachedProduct);
 		res.status(200).json(
 			new ApiResponse(200, parsedProduct, "Product fetched successfully (from cache)")
@@ -298,8 +300,10 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 		throw new ApiError(404, "Product not found");
 	}
 
-	// Cache product in Redis for 5 minutes (300 seconds)
-	await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
+	if(userRole !== "admin") {
+		// Cache the product in Redis for 5 minutes (300 seconds)
+		await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
+	}
 
 	res.status(200).json(new ApiResponse(200, product, "Product fetched successfully"));
 });

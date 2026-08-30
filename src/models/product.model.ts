@@ -3,6 +3,11 @@ import IProduct from "../types/schema/product.js";
 
 const ProductSchema = new mongoose.Schema<IProduct>(
 	{
+		status: {
+			type: Boolean,
+			required: true,
+			default: true
+		},
 		title: {
 			type: String,
 			required: true
