@@ -59,11 +59,21 @@ export const updateVariant = asyncHandler(async (req: Request, res: Response) =>
 */
 export const updateProduct = asyncHandler(async (req: Request, res: Response) => {
 	const { productId } = req.params;
-	const { title, description, inStock, amount, discount, supplierCost, fabric, tags, sizes, isActive } =
-		req.body;
+	const {
+		title,
+		description,
+		inStock,
+		amount,
+		discount,
+		supplierCost,
+		fabric,
+		tags,
+		sizes,
+		status
+	} = req.body;
 	if (
 		[
-			isActive,
+			status,
 			productId,
 			title,
 			description,
@@ -115,9 +125,8 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 			throw new ApiError(500, "Failed to update Image");
 		}
 	}
-
 	const updatedProduct = await product.updateOne({
-		isActive,
+		status,
 		title,
 		description,
 		inStock,
@@ -136,4 +145,75 @@ export const updateProduct = asyncHandler(async (req: Request, res: Response) =>
 	await invalidateProductCache(productId as string);
 
 	res.status(201).json(new ApiResponse(201, updatedProduct, "Product updated successfully"));
+});
+
+export const updateBulkStatus = asyncHandler(async (req: Request, res: Response) => {
+	const { productIds, status } = req.body;
+	if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+		throw new ApiError(400, "Product IDs are required");
+	}
+	if (typeof status !== "boolean") {
+		throw new ApiError(400, "Status must be a boolean");
+	}
+
+	const updateResult = await ProductModel.updateMany(
+		{ _id: { $in: productIds } },
+		{ $set: { status } }
+	);
+
+	if (updateResult.modifiedCount === 0) {
+		throw new ApiError(404, "No products were updated. Please check the provided product IDs.");
+	}
+
+	// Invalidate product & product list cache from Redis
+	await Promise.all(productIds.map((id: string) => invalidateProductCache(id)));
+
+	res.status(200).json(new ApiResponse(200, null, "Products status updated successfully"));
+});
+
+export const updateBulkDiscount = asyncHandler(async (req: Request, res: Response) => {
+	const { productIds, discount } = req.body;
+	if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+		throw new ApiError(400, "Product IDs are required");
+	}
+	if (typeof discount !== "number" || discount < 0 || discount > 50) {
+		throw new ApiError(400, "Discount must be a number between 0 and 50");
+	}
+	const updateResult = await ProductModel.updateMany(
+		{ _id: { $in: productIds } },
+		{ $set: { discount } }
+	);
+	if (updateResult.modifiedCount === 0) {
+		throw new ApiError(404, "No products were updated. Please check the provided product IDs.");
+	}
+
+	// Invalidate product & product list cache from Redis
+	await Promise.all(productIds.map((id: string) => invalidateProductCache(id)));
+
+	res.status(200).json(new ApiResponse(200, null, "Products discount updated successfully"));
+});
+
+
+export const updateBulkStock = asyncHandler(async (req: Request, res: Response) => {
+	const { productIds, inStock } = req.body;
+	if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+		throw new ApiError(400, "Product IDs are required");
+	}
+	if (typeof inStock !== "boolean") {
+		throw new ApiError(400, "In Stock must be a boolean");
+	}
+
+	const updateResult = await ProductModel.updateMany(
+		{ _id: { $in: productIds } },
+		{ $set: { inStock } }
+	);
+
+	if (updateResult.modifiedCount === 0) {
+		throw new ApiError(404, "No products were updated. Please check the provided product IDs.");
+	}
+
+	// Invalidate product & product list cache from Redis
+	await Promise.all(productIds.map((id: string) => invalidateProductCache(id)));
+
+	res.status(200).json(new ApiResponse(200, null, "Products stock updated successfully"));
 });

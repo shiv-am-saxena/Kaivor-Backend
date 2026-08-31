@@ -7,6 +7,7 @@ import VariantModel from "../../../../models/variant.model.js";
 import ApiResponse from "../../../../utils/ApiResponse.js";
 import logger from "../../../../libs/logger.js";
 import { invalidateProductCache } from "../../../../libs/cacheInvalidation.js";
+import mongoose from "mongoose";
 
 const IMAGE_FIELDS = ["frontFace", "backFace", "frontFull", "backFull"] as const;
 
@@ -182,4 +183,40 @@ export const deleteSingleVariantImg = asyncHandler(async (req: Request, res: Res
 	await invalidateProductCache(productId as string);
 
 	res.status(200).json(new ApiResponse(200, updatedVariant, "Image deleted successfully"));
+});
+
+export const deleteBulkProducts = asyncHandler(async (req: Request, res: Response) => {
+	const { productIds } = req.body;
+	if (!productIds || !Array.isArray(productIds) || productIds.length === 0) {
+		throw new ApiError(400, "Product IDs are required");
+	}
+	const products = await ProductModel.find({ _id: { $in: productIds.map((id) => new mongoose.Types.ObjectId(id)) } }).populate("variants");
+	if (products.length === 0) {
+		throw new ApiError(404, "No products found for the provided IDs");
+	}
+
+	await Promise.all(
+		products.map(async (product) => {
+			const { variants } = product;
+
+			if (variants) {
+				await Promise.all(
+					(variants as any[]).map(async (variant) => {
+						await Promise.all([
+							deleteFile(variant.frontFace),
+							deleteFile(variant.backFace),
+							deleteFile(variant.frontFull),
+							deleteFile(variant.backFull)
+						]);
+						await VariantModel.deleteOne({ _id: variant._id });
+					})
+				);
+			}
+			await Promise.all([deleteFile(product.baseImage), deleteFile(product.assetLink)]);
+			await ProductModel.deleteOne({ _id: product._id });
+			await invalidateProductCache(product._id as unknown as string);
+		})
+	);
+
+	res.status(200).json(new ApiResponse(200, null, "Products deleted successfully"));
 });
