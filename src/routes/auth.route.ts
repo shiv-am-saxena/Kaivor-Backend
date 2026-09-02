@@ -25,4 +25,6 @@ router.post("/reset-password", resetPassword);
 // Fetch Profile
 router.get("/profile", isLoggedIn, profile);
 
+//Profile
+router.get("/profile", isLoggedIn, profile); // Route for fetching user profile, protected by isLoggedIn middleware
 export default router;

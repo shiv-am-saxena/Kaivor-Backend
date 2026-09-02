@@ -92,6 +92,12 @@ export const loginWithEmail = asyncHandler(async (req: Request, res: Response) =
 			"Email is not verified. Please verify your email before logging in."
 		);
 	}
+	if (!user.isVerified.email) {
+		throw new ApiError(
+			403,
+			"Email is not verified. Please verify your email before logging in."
+		);
+	}
 	const accessToken = generateAccessToken({ _id: user._id, email: user.email });
 	const refreshToken = generateRefreshToken({ _id: user._id, email: user.email });
 	const newUser = await UserModel.findByIdAndUpdate(
@@ -169,7 +175,7 @@ export const regenAccessToken = asyncHandler(async (req: Request, res: Response)
 	if (!user) {
 		throw new ApiError(404, "User not found");
 	}
-	if (user.refreshToken !== refreshToken as string) {
+	if (user.refreshToken !== (refreshToken as string)) {
 		throw new ApiError(401, "Refresh token does not match");
 	}
 	const newAccessToken = generateAccessToken({ _id: user._id, email: user.email });
@@ -205,6 +211,13 @@ export const forgotPassword = asyncHandler(async (req: Request, res: Response) =
 	if (!mail) {
 		throw new ApiError(503, "Failed to send password reset email");
 	}
+	res.status(200).json(
+		new ApiResponse(
+			200,
+			null,
+			"Password reset email sent successfully. Please check your email."
+		)
+	);
 	res.status(200).json(
 		new ApiResponse(
 			200,
