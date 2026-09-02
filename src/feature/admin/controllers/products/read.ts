@@ -43,8 +43,7 @@ export const getAllProducts = asyncHandler(async (req: Request, res: Response) =
 	let projection: string;
 	if (userRole === "user") {
 		projection = "title inStock amount discount baseImage tag variants";
-	}
-	if (userRole === "supplier") {
+	} else if (userRole === "supplier") {
 		projection =
 			"title inStock description amount discount baseImage supplierId supplierEmail assetLink supplierCost fabric tag variants size createdAt updatedAt";
 	} else {
@@ -288,10 +287,10 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 		projection = ""; // Return all fields
 	} else if (userRole === "supplier") {
 		projection =
-			"title inStock baseImage supplierId supplierEmail assetLink supplierCost fabric variants size";
+			"_id title inStock baseImage supplierId supplierEmail assetLink supplierCost fabric variants size";
 	} else {
 		// Default "user" role
-		projection = "title inStock description amount discount fabric tag variants size";
+		projection = "_id title inStock description amount discount fabric tag variants size";
 	}
 
 	const product = await ProductModel.findById(productId, projection).populate("variants");
@@ -300,7 +299,7 @@ export const getProductById = asyncHandler(async (req: Request, res: Response) =
 		throw new ApiError(404, "Product not found");
 	}
 
-	if(userRole !== "admin") {
+	if (userRole !== "admin") {
 		// Cache the product in Redis for 5 minutes (300 seconds)
 		await redisClient.set(cacheKey, JSON.stringify(product), "EX", 300);
 	}
