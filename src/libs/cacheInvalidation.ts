@@ -37,9 +37,22 @@ export const invalidateProductCache = async (productId?: string): Promise<void> 
 			});
 		}
 
-		logger.info(`Product cache successfully invalidated for pattern(s): ${patternsToDelete.join(", ")}`);
+		logger.info(
+			`Product cache successfully invalidated for pattern(s): ${patternsToDelete.join(", ")}`
+		);
 	} catch (error) {
 		logger.error("Failed to invalidate product cache from Redis:", error);
 	}
 };
 
+/**
+ * Invalidates homepage-related Redis caches whenever a draft version is published or updated.
+ */
+export const invalidateHomepageCache = async (): Promise<void> => {
+	try {
+		await redisClient.del("layout:last_published", "homepage:last_published");
+		logger.info("Homepage layout cache successfully invalidated from Redis");
+	} catch (error) {
+		logger.error("Failed to invalidate homepage cache from Redis:", error);
+	}
+};

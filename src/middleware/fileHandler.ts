@@ -34,7 +34,7 @@ const imageAndZipFilter: multer.Options["fileFilter"] = (req, file, callback) =>
 };
 
 export const upload = multer({
-	storage:multer.memoryStorage(),
+	storage: multer.memoryStorage(),
 	limits: {
 		fileSize: 50 * 1024 * 1024 // 50 MB per file
 	},
@@ -51,3 +51,27 @@ export const productUploadMiddleware = upload.fields([
 		maxCount: 1
 	}
 ]);
+
+const imageAndVideoFilter: multer.Options["fileFilter"] = (req, file, callback) => {
+	const isImage = file.mimetype.startsWith("image/");
+	const isVideo = file.mimetype.startsWith("video/");
+
+	if (isImage || isVideo) {
+		callback(null, true);
+		return;
+	}
+
+	callback(new Error("Invalid file type. Only image and video files are allowed."));
+};
+
+export const fileHandler = multer({
+	storage: multer.memoryStorage(),
+	limits: {
+		fileSize: 100 * 1024 * 1024 // 100 MB limit for image and video uploads
+	},
+	fileFilter: imageAndVideoFilter
+});
+
+export const imageUploader = fileHandler.single("file");
+
+export const videoUploader = fileHandler.single("file");

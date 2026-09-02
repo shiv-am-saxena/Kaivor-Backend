@@ -24,4 +24,5 @@ router.post("/forgot-password", forgotPassword);
 router.post("/reset-password", resetPassword);
 // Fetch Profile
 router.get("/profile", isLoggedIn, profile);
+
 export default router;

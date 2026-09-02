@@ -31,6 +31,10 @@ const envSchema = z.object({
 	AWS_S3_BUCKET_NAME: z.string().min(1, { message: "AWS_S3_BUCKET_NAME is required" }),
 	RAZORPAY_API_KEY: z.string().min(1, { message: "RAZORPAY_API_KEY is required" }),
 	RAZORPAY_API_SECRET: z.string().min(1, { message: "RAZORPAY_API_SECRET is required" }),
+	SDUI_CACHE_ENABLED: z
+		.string()
+		.optional()
+		.transform((v) => v !== "false")
 });
 
 const parsedEnv = envSchema.parse(process.env);
@@ -60,4 +64,5 @@ export const env = {
 	AWS_S3_BUCKET_NAME: parsedEnv.AWS_S3_BUCKET_NAME,
 	RAZORPAY_API_KEY: parsedEnv.RAZORPAY_API_KEY,
 	RAZORPAY_API_SECRET: parsedEnv.RAZORPAY_API_SECRET,
+	SDUI_CACHE_ENABLED: parsedEnv.SDUI_CACHE_ENABLED
 };
