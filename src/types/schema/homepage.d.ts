@@ -14,7 +14,6 @@ export default interface IHomepage {
 
 export interface IAnnouncement {
 	order: number; // Order of the announcement in the list
-	isGlobal: boolean; // Indicates whether the announcement is global or specific to a homepage
 	title: string; // Title of the announcement
 	buttonText: string; // Text displayed on the announcement button
 	buttonLink: string; // URL or link associated with the announcement button
@@ -64,10 +63,12 @@ export interface IFeaturedProduct {
 export interface ICategory {
 	order: number; // Order of the category in the list
 	title: string; // Title of the category
-	imageUrl?: string; // Optional URL of the category image
-	products: Types.ObjectId[]; // Array of identifiers for the products in the category
-	startDate?: Date | null; // Optional start date for the category (null if not set)
-	endDate?: Date | null; // Optional end date for the category (null if not set)
+	categories: [{
+		imageUrl: string; // Optional URL of the category image
+		name: string; // Name of the category
+		link: string; // URL or link associated with the category
+
+	}];
 	isActive: boolean; // Indicates whether the category is currently active or not
 	createdAt: Date; // Timestamp indicating when the category was created
 	updatedAt: Date; // Timestamp indicating when the category was last updated
